@@ -106,12 +106,12 @@ async function getAllMessages() {
 
 // Exporting functions and vars
 export {
-    countMessages as a,            // Previously Y
-    getLastMessageId as b,        // Previously J
-    getFirstAndLastMessage as c,  // Previously Z
-    database as d,                // Previously E
-    replikaExportKey as e,        // Previously U
-    GlobalScope as f,             // Previously F
-    getAllMessages as g,          // Previously K
-    checkPayment as h              // Previously G I really dont wanna dig thru index too much so good enough for me
+    countMessages,            // Previously Y
+    getLastMessageId,        // Previously J
+    getFirstAndLastMessage,  // Previously Z
+    database,                // Previously E
+    replikaExportKey,        // Previously U
+    GlobalScope,             // Previously F
+    getAllMessages,          // Previously K
+    checkPayment             // Previously G I really dont wanna dig thru index too much so good enough for me
 };

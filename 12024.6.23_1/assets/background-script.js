@@ -1,5 +1,5 @@
 //assets/background-script.js
-import { e as runtime } from "./replikaExport.js";
+import { database as runtime } from "./replikaExport.js";
 
 // Remove existing context menus and create a new one for exporting Replika chat
 chrome.contextMenus.removeAll(() => {
