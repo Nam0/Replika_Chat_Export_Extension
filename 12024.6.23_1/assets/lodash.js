@@ -1,4 +1,4 @@
-//lodash.js
+//assets/lodash.js
 //Idc to de-obfuscate this tbh
 import {GlobalScope as GlobalScope,} from "./replikaExport.js";
 var io = {},

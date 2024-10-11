@@ -1,12 +1,11 @@
 //assets/index.js
-//Hours Wasted: 9 1/2 Gotta waste more to fix fuckups tho
+//Hours Wasted: 11 1/2 Fuckups fixed, just gotta fix the voice CORS issue but idk how to spoof it properly
 import {
     countMessages,
     getLastMessageId,
     database,
-    replikaExportKey,
     getAllMessages,
-    checkPayment
+
 } from "./replikaExport.js";
 
 import {
@@ -15,548 +14,445 @@ import {
     LodashE3
 } from "./lodash.js";
 
-var s1 = Object.defineProperty;
-var o1 = (f, i, n) => i in f ? s1(f, i, {
+var defineProperty = Object.defineProperty;
+var setProperty = (obj, key, value) => key in obj ? defineProperty(obj, key, {
     enumerable: !0,
     configurable: !0,
     writable: !0,
-    value: n
-}) : f[i] = n;
-var Fu = (f, i, n) => (o1(f, typeof i != "symbol" ? i + "" : i, n), n);
+    value: value
+}) : obj[key] = value;
+var defineOrSetProperty = (obj, key, value) => (setProperty(obj, typeof key != "symbol" ? key + "" : key, value), value);
 
 
 (function() {
-    const i = document.createElement("link").relList;
-    if (i && i.supports && i.supports("modulepreload")) return;
-    for (const s of document.querySelectorAll('link[rel="modulepreload"]')) l(s);
-    new MutationObserver(s => {
-        for (const d of s)
-            if (d.type === "childList")
-                for (const u of d.addedNodes) u.tagName === "LINK" && u.rel === "modulepreload" && l(u)
+    const relList = document.createElement("link").relList;
+    if (relList && relList.supports && relList.supports("modulepreload")) return;
+    for (const link of document.querySelectorAll('link[rel="modulepreload"]')) preloadLink(link);
+    new MutationObserver(mutations => {
+        for (const mutation of mutations)
+            if (mutation.type === "childList")
+                for (const addedNode of mutation.addedNodes) addedNode.tagName === "LINK" && addedNode.rel === "modulepreload" && preloadLink(addedNode)
     }).observe(document, {
         childList: !0,
         subtree: !0
     });
 
-    function n(s) {
-        const d = {};
-        return s.integrity && (d.integrity = s.integrity), s.referrerpolicy && (d.referrerPolicy = s.referrerpolicy), s.crossorigin === "use-credentials" ? d.credentials = "include" : s.crossorigin === "anonymous" ? d.credentials = "omit" : d.credentials = "same-origin", d
+    function getFetchOptions(link) {
+        const options = {};
+        return link.integrity && (options.integrity = link.integrity), link.referrerpolicy && (options.referrerPolicy = link.referrerpolicy), link.crossorigin === "use-credentials" ? options.credentials = "include" : link.crossorigin === "anonymous" ? options.credentials = "omit" : options.credentials = "same-origin", options
     }
 
-    function l(s) {
-        if (s.ep) return;
-        s.ep = !0;
-        const d = n(s);
-        fetch(s.href, d)
+    function preloadLink(link) {
+        if (link.ep) return;
+        link.ep = !0;
+        const fetchOptions = getFetchOptions(link);
+        fetch(link.href, fetchOptions)
     }
 })();
 
-function ne() {}
+function noOperation() {}
 
-function c1(f, i) {
-    for (const n in i) f[n] = i[n];
-    return f
+function mergeObjects(target, source) {
+    for (const key in source) target[key] = source[key];
+    return target
 }
 
-function h1(f) {
-    return !!f && (typeof f == "object" || typeof f == "function") && typeof f.then == "function"
+function isPromise(value) {
+    return !!value && (typeof value == "object" || typeof value == "function") && typeof value.then == "function"
 }
 
-function ml(f) {
-    return f()
+function mexecuteFunction(funct) {
+    return funct()
 }
 
-function Pu() {
+function createEmptyObject() {
     return Object.create(null)
 }
 
-function tn(f) {
-    f.forEach(ml)
+function executeAll(func) {
+    func.forEach(mexecuteFunction)
 }
 
-function Ti(f) {
-    return typeof f == "function"
+function isFunction(func) {
+    return typeof func == "function"
 }
 
-function en(f, i) {
-    return f != f ? i == i : f !== i || f && typeof f == "object" || typeof f == "function"
+function isEqual(var1, var2) {
+    return var1 != var1 ? var2 == var2 : var1 !== var2 || var1 && typeof var1 == "object" || typeof var1 == "function"
 }
 
-function d1(f) {
-    return Object.keys(f).length === 0
+function isObjectEmpty(obj) {
+    return Object.keys(obj).length === 0
 }
 
-function qs(f, i, n, l) {
-    if (f) {
-        const s = vl(f, i, n, l);
-        return f[0](s)
+function callIfExists(functionArray, ctx, param1, param2) {
+    if (functionArray) {
+        const s = invokeFunction(functionArray, ctx, param1, param2);
+        return functionArray[0](s)
     }
 }
 
-function vl(f, i, n, l) {
-    return f[1] && l ? c1(n.ctx.slice(), f[1](l(i))) : n.ctx
+function invokeFunction(functionArray, ctx, param1, param2) {
+    return functionArray[1] && param2 ? mergeObjects(param1.ctx.slice(), functionArray[1](param2(ctx))) : param1.ctx
 }
 
-function js(f, i, n, l) {
-    if (f[2] && l) {
-        const s = f[2](l(n));
-        if (i.dirty === void 0) return s;
-        if (typeof s == "object") {
+function computeDirtyFlag(functionArray, ctx, param1, param2) {
+    if (functionArray[2] && param2) {
+        const newFlags = functionArray[2](param2(param1));
+        if (ctx.dirty === void 0) return newFlags;
+        if (typeof newFlags == "object") {
             const d = [],
-                u = Math.max(i.dirty.length, s.length);
-            for (let a = 0; a < u; a += 1) d[a] = i.dirty[a] | s[a];
+                u = Math.max(ctx.dirty.length, newFlags.length);
+            for (let index = 0; index < u; index += 1) d[index] = ctx.dirty[index] | newFlags[index];
             return d
         }
-        return i.dirty | s
+        return ctx.dirty | newFlags
     }
-    return i.dirty
+    return ctx.dirty
 }
 
-function Ys(f, i, n, l, s, d) {
-    if (s) {
-        const u = vl(i, n, l, d);
-        f.p(u, s)
+function updateIfExists(instance, ctx, param1, param2, flags, param3) {
+    if (flags) {
+        const updatedValues = invokeFunction(ctx, param1, param2, param3);
+        instance.p(updatedValues, flags)
     }
 }
 
-function Js(f) {
-    if (f.ctx.length > 32) {
-        const i = [],
-            n = f.ctx.length / 32;
-        for (let l = 0; l < n; l++) i[l] = -1;
-        return i
+function allocateMemory(instance) {
+    if (instance.ctx.length > 32) {
+        const memoryArray = [],
+            chunks = instance.ctx.length / 32;
+        for (let index = 0; index < chunks; index++) memoryArray[index] = -1;
+        return memoryArray
     }
     return -1
 }
 
-function q(f, i) {
-    f.appendChild(i)
+function appendChild(parent, child) {
+    parent.appendChild(child)
 }
 
-function pt(f, i, n) {
-    f.insertBefore(i, n || null)
+function insertBefore(parent, child, refNode) {
+    parent.insertBefore(child, refNode || null)
 }
 
-function ht(f) {
-    f.parentNode && f.parentNode.removeChild(f)
+function removeElement(element) {
+    element.parentNode && element.parentNode.removeChild(element)
 }
 
-function Dn(f, i) {
-    for (let n = 0; n < f.length; n += 1) f[n] && f[n].d(i)
+function callDestroyMethods(elements, param) {
+    for (let index = 0; index < elements.length; index += 1) elements[index] && elements[index].d(param)
 }
 
-function ot(f) {
-    return document.createElement(f)
+function createElement(element) {
+    return document.createElement(element)
 }
 
-function It(f) {
-    return document.createTextNode(f)
+function createTextNode(text) {
+    return document.createTextNode(text)
 }
 
-function Et() {
-    return It(" ")
+function createSpaceTextNode() {
+    return createTextNode(" ")
 }
 
-function yn() {
-    return It("")
+function createEmptyTextNode() {
+    return createTextNode("")
 }
 
-function le(f, i, n, l) {
-    return f.addEventListener(i, n, l), () => f.removeEventListener(i, n, l)
+function addEventListenerWithCleanup(element, event, callback, options) {
+    return element.addEventListener(event, callback, options), () => element.removeEventListener(event, callback, options)
 }
 
-function dt(f, i, n) {
-    n == null ? f.removeAttribute(i) : f.getAttribute(i) !== n && f.setAttribute(i, n)
+function setAttribute(element, attribute, value) {
+    value == null ? element.removeAttribute(attribute) : element.getAttribute(attribute) !== value && element.setAttribute(attribute, value)
 }
 
-function lr(f) {
-    return f === "" ? null : +f
+function parseInteger(value) {
+    return value === "" ? null : +value
 }
 
-function p1(f) {
-    return Array.from(f.childNodes)
+function getChildNodesArray(parent) {
+    return Array.from(parent.childNodes)
 }
 
-function ae(f, i) {
-    i = "" + i, f.wholeText !== i && (f.data = i)
+function updateWholeTextNode(textNode, newValue) {
+    newValue = "" + newValue, textNode.wholeText !== newValue && (textNode.data = newValue)
 }
 
-function Ln(f, i) {
-    f.value = i ?? ""
+function setInputValue(input, value) {
+    input.value = value ?? ""
 }
 
-function fr(f, i) {
-    for (let n = 0; n < f.options.length; n += 1) {
-        const l = f.options[n];
-        if (l.__value === i) {
-            l.selected = !0;
+function selectOptionByValue(selectedElement, value) {
+    for (let index = 0; index < selectedElement.options.length; index += 1) {
+        const option = selectedElement.options[index];
+        if (option.__value === value) {
+            option.selected = !0;
             return
         }
     }
-    f.selectedIndex = -1
+    selectedElement.selectedIndex = -1
 }
 
-function Vs(f) {
-    const i = f.querySelector(":checked") || f.options[0];
+function getCheckedValue(form) {
+    const i = form.querySelector(":checked") || form.options[0];
     return i && i.__value
 }
 
-function Wu(f, i) {
-    return new f(i)
+function createInstance(constructor, arg) {
+    return new constructor(arg)
 }
-let Lr;
+let currentComponent;
 
-function wn(f) {
-    Lr = f
-}
-
-function wl() {
-    if (!Lr) throw new Error("Function called outside component initialization");
-    return Lr
+function setCurrentComponent(componet) {
+    currentComponent = componet
 }
 
-function yl(f) {
-    wl().$$.on_mount.push(f)
-}
-const ur = [],
-    Dr = [],
-    Ai = [],
-    Qs = [],
-    _1 = Promise.resolve();
-let to = !1;
-
-function g1() {
-    to || (to = !0, _1.then(oo))
+function getCurrentComponent() {
+    if (!currentComponent) throw new Error("Function called outside component initialization");
+    return currentComponent
 }
 
-function cr(f) {
-    Ai.push(f)
+function addOnMountHook(hook) {
+    getCurrentComponent().$$.on_mount.push(hook)
+}
+const pendingUpdates = [],
+    afterUpdateCallbacks = [],
+    beforeUpdateCallbacks = [],
+    cleanupCallbacks = [],
+    resolvedPromise = Promise.resolve();
+let isUpdating = !1;
+
+function scheduleUpdate() {
+    isUpdating || (isUpdating = !0, resolvedPromise.then(executePendingUpdates))
 }
 
-function bl(f) {
-    Qs.push(f)
+function addBeforeUpdateCallback(callback) {
+    beforeUpdateCallbacks.push(callback)
 }
-const Xs = new Set;
-let ar = 0;
 
-function oo() {
-    if (ar !== 0) return;
-    const f = Lr;
+function addCleanupCallback(callback) {
+    cleanupCallbacks.push(callback)
+}
+const executedCallbacks = new Set;
+let currentPromiseContext = 0;
+
+function executePendingUpdates() {
+    if (currentPromiseContext !== 0) return;
+    const previousComponent = currentComponent;
     do {
         try {
-            for (; ar < ur.length;) {
-                const i = ur[ar];
-                ar++, wn(i), m1(i.$$)
+            for (; currentPromiseContext < pendingUpdates.length;) {
+                const component = pendingUpdates[currentPromiseContext];
+                currentPromiseContext++, setCurrentComponent(component), executeComponentUpdate(component.$$)
             }
-        } catch (i) {
-            throw ur.length = 0, ar = 0, i
+        } catch (error) {
+            throw pendingUpdates.length = 0, currentPromiseContext = 0, error
         }
-        for (wn(null), ur.length = 0, ar = 0; Dr.length;) Dr.pop()();
-        for (let i = 0; i < Ai.length; i += 1) {
-            const n = Ai[i];
-            Xs.has(n) || (Xs.add(n), n())
+        for (setCurrentComponent(null), pendingUpdates.length = 0, currentPromiseContext = 0; afterUpdateCallbacks.length;) afterUpdateCallbacks.pop()();
+        for (let index = 0; index < beforeUpdateCallbacks.length; index += 1) {
+            const callback = beforeUpdateCallbacks[index];
+            executedCallbacks.has(callback) || (executedCallbacks.add(callback), callback())
         }
-        Ai.length = 0
-    } while (ur.length);
-    for (; Qs.length;) Qs.pop()();
-    to = !1, Xs.clear(), wn(f)
+        beforeUpdateCallbacks.length = 0
+    } while (pendingUpdates.length);
+    for (; cleanupCallbacks.length;) cleanupCallbacks.pop()();
+    isUpdating = !1, executedCallbacks.clear(), setCurrentComponent(previousComponent)
 }
 
-function m1(f) {
-    if (f.fragment !== null) {
-        f.update(), tn(f.before_update);
-        const i = f.dirty;
-        f.dirty = [-1], f.fragment && f.fragment.p(f.ctx, i), f.after_update.forEach(cr)
+function executeComponentUpdate(component) {
+    if (component.fragment !== null) {
+        component.update(), executeAll(component.before_update);
+        const dirtyState = component.dirty;
+        component.dirty = [-1], component.fragment && component.fragment.p(component.ctx, dirtyState), component.after_update.forEach(addBeforeUpdateCallback)
     }
 }
-const Ei = new Set;
-let Zn;
+const pendingCallbacks = new Set;
+let promiseContext;
 
-function pr() {
-    Zn = {
+function startPromiseContext() {
+    promiseContext = {
         r: 0,
         c: [],
-        p: Zn
+        p: promiseContext
     }
 }
 
-function _r() {
-    Zn.r || tn(Zn.c), Zn = Zn.p
+function endPromiseContext() {
+    promiseContext.r || executeAll(promiseContext.c), promiseContext = promiseContext.p
 }
 
-function Ht(f, i) {
-    f && f.i && (Ei.delete(f), f.i(i))
+function invokeInitFunction(initFunction, params) {
+    initFunction && initFunction.i && (pendingCallbacks.delete(initFunction), initFunction.i(params))
 }
 
-function qt(f, i, n, l) {
-    if (f && f.o) {
-        if (Ei.has(f)) return;
-        Ei.add(f), Zn.c.push(() => {
-            Ei.delete(f), l && (n && f.d(1), l())
-        }), f.o(i)
-    } else l && l()
+function handlePromise(promise, context, onResolved, onRejected) {
+    if (promise && promise.o) {
+        if (pendingCallbacks.has(promise)) return;
+        pendingCallbacks.add(promise), promiseContext.c.push(() => {
+            pendingCallbacks.delete(promise), onRejected && (onResolved && promise.d(1), onRejected())
+        }), promise.o(context)
+    } else onRejected && onRejected()
 }
 
-function v1(f, i) {
-    const n = i.token = {};
+function handleAsyncValue(asyncValue, state) {
+    const context = state.token = {};
 
-    function l(s, d, u, a) {
-        if (i.token !== n) return;
-        i.resolved = a;
-        let m = i.ctx;
-        u !== void 0 && (m = m.slice(), m[u] = a);
-        const _ = s && (i.current = s)(m);
-        let c = !1;
-        i.block && (i.blocks ? i.blocks.forEach((g, h) => {
-            h !== d && g && (pr(), qt(g, 1, 1, () => {
-                i.blocks[h] === g && (i.blocks[h] = null)
-            }), _r())
-        }) : i.block.d(1), _.c(), Ht(_, 1), _.m(i.mount(), i.anchor), c = !0), i.block = _, i.blocks && (i.blocks[d] = _), c && oo()
+    function handleResolvedBlock(resolvedFunc, blockIndex, valueIndex, resolvedValue) {
+        if (state.token !== context) return;
+        state.resolved = resolvedValue;
+        let componentContext = state.ctx;
+        valueIndex !== void 0 && (componentContext = componentContext.slice(), componentContext[valueIndex] = resolvedValue);
+        const resolvedFunction = resolvedFunc && (state.current = resolvedFunc)(componentContext);
+        let isBlockUpdated = !1;
+        state.block && (state.blocks ? state.blocks.forEach((g, h) => {
+            h !== blockIndex && g && (startPromiseContext(), handlePromise(g, 1, 1, () => {
+                state.blocks[h] === g && (state.blocks[h] = null)
+            }), endPromiseContext())
+        }) : state.block.d(1), resolvedFunction.c(), invokeInitFunction(resolvedFunction, 1), resolvedFunction.m(state.mount(), state.anchor), isBlockUpdated = !0), state.block = resolvedFunction, state.blocks && (state.blocks[blockIndex] = resolvedFunction), isBlockUpdated && executePendingUpdates()
     }
-    if (h1(f)) {
-        const s = wl();
-        if (f.then(d => {
-                wn(s), l(i.then, 1, i.value, d), wn(null)
+    if (isPromise(asyncValue)) {
+        const s = getCurrentComponent();
+        if (asyncValue.then(d => {
+                setCurrentComponent(s), handleResolvedBlock(state.then, 1, state.value, d), setCurrentComponent(null)
             }, d => {
-                if (wn(s), l(i.catch, 2, i.error, d), wn(null), !i.hasCatch) throw d
-            }), i.current !== i.pending) return l(i.pending, 0), !0
+                if (setCurrentComponent(s), handleResolvedBlock(state.catch, 2, state.error, d), setCurrentComponent(null), !state.hasCatch) throw d
+            }), state.current !== state.pending) return handleResolvedBlock(state.pending, 0), !0
     } else {
-        if (i.current !== i.then) return l(i.then, 1, i.value, f), !0;
-        i.resolved = f
+        if (state.current !== state.then) return handleResolvedBlock(state.then, 1, state.value, asyncValue), !0;
+        state.resolved = asyncValue
     }
 }
 
-function w1(f, i, n) {
-    const l = i.slice(),
+function updateComponent(component, state, dirtyIndex) {
+    const updatedContext = state.slice(),
         {
-            resolved: s
-        } = f;
-    f.current === f.then && (l[f.value] = s), f.current === f.catch && (l[f.error] = s), f.block.p(l, n)
+            resolved: sResolved
+        } = component;
+    component.current === component.then && (updatedContext[component.value] = sResolved), component.current === component.catch && (updatedContext[component.error] = sResolved), component.block.p(updatedContext, dirtyIndex)
 }
 
-function xl(f, i, n) {
-    const l = f.$$.props[i];
-    l !== void 0 && (f.$$.bound[l] = n, n(f.$$.ctx[l]))
+function bindComponentProp(component, propIndex, value) {
+    const prop = component.$$.props[propIndex];
+    prop !== void 0 && (component.$$.bound[prop] = value, value(component.$$.ctx[prop]))
 }
 
-function Ee(f) {
-    f && f.c()
+function createFragment(componet) {
+    componet && componet.c()
 }
 
-function ye(f, i, n, l) {
+function mountComponent(component, target, anchor, isCustElement) {
     const {
-        fragment: s,
-        after_update: d
-    } = f.$$;
-    s && s.m(i, n), l || cr(() => {
-        const u = f.$$.on_mount.map(ml).filter(Ti);
-        f.$$.on_destroy ? f.$$.on_destroy.push(...u) : tn(u), f.$$.on_mount = []
-    }), d.forEach(cr)
+        fragment: sfragment,
+        after_update: dafter_update
+    } = component.$$;
+    sfragment && sfragment.m(target, anchor), isCustElement || addBeforeUpdateCallback(() => {
+        const u = component.$$.on_mount.map(mexecuteFunction).filter(isFunction);
+        component.$$.on_destroy ? component.$$.on_destroy.push(...u) : executeAll(u), component.$$.on_mount = []
+    }), dafter_update.forEach(addBeforeUpdateCallback)
 }
 
-function be(f, i) {
-    const n = f.$$;
-    n.fragment !== null && (tn(n.on_destroy), n.fragment && n.fragment.d(i), n.on_destroy = n.fragment = null, n.ctx = [])
+function destroyComponent(component, shouldDetach) {
+    const n = component.$$;
+    n.fragment !== null && (executeAll(n.on_destroy), n.fragment && n.fragment.d(shouldDetach), n.on_destroy = n.fragment = null, n.ctx = [])
 }
 
-function y1(f, i) {
-    f.$$.dirty[0] === -1 && (ur.push(f), g1(), f.$$.dirty.fill(0)), f.$$.dirty[i / 31 | 0] |= 1 << i % 31
+function markDirty(component, dirtyIndex) {
+    component.$$.dirty[0] === -1 && (pendingUpdates.push(component), scheduleUpdate(), component.$$.dirty.fill(0)), component.$$.dirty[dirtyIndex / 31 | 0] |= 1 << dirtyIndex % 31
 }
 
-function nn(f, i, n, l, s, d, u, a = [-1]) {
-    const m = Lr;
-    wn(f);
-    const _ = f.$$ = {
+function initializeComponent(component, options, ctx, renderFunction, props, notEqualFn, instanceFunction, initialDirtyState = [-1]) {
+    const previousComponent = currentComponent;
+    setCurrentComponent(component);
+    const componentState = component.$$ = {
         fragment: null,
         ctx: [],
-        props: d,
-        update: ne,
-        not_equal: s,
-        bound: Pu(),
+        props: notEqualFn,
+        update: noOperation,
+        not_equal: props,
+        bound: createEmptyObject(),
         on_mount: [],
         on_destroy: [],
         on_disconnect: [],
         before_update: [],
         after_update: [],
-        context: new Map(i.context || (m ? m.$$.context : [])),
-        callbacks: Pu(),
-        dirty: a,
+        context: new Map(options.context || (previousComponent ? previousComponent.$$.context : [])),
+        callbacks: createEmptyObject(),
+        dirty: initialDirtyState,
         skip_bound: !1,
-        root: i.target || m.$$.root
+        root: options.target || previousComponent.$$.root
     };
-    u && u(_.root);
-    let c = !1;
-    if (_.ctx = n ? n(f, i.props || {}, (g, h, ...p) => {
-            const x = p.length ? p[0] : h;
-            return _.ctx && s(_.ctx[g], _.ctx[g] = x) && (!_.skip_bound && _.bound[g] && _.bound[g](x), c && y1(f, g)), h
-        }) : [], _.update(), c = !0, tn(_.before_update), _.fragment = l ? l(_.ctx) : !1, i.target) {
-        if (i.hydrate) {
-            const g = p1(i.target);
-            _.fragment && _.fragment.l(g), g.forEach(ht)
-        } else _.fragment && _.fragment.c();
-        i.intro && Ht(f.$$.fragment), ye(f, i.target, i.anchor, i.customElement), oo()
+    instanceFunction && instanceFunction(componentState.root);
+    let isInitialUpdate = !1;
+    if (componentState.ctx = ctx ? ctx(component, options.props || {}, (g, h, ...p) => {
+            const newValue = p.length ? p[0] : h;
+            return componentState.ctx && props(componentState.ctx[g], componentState.ctx[g] = newValue) && (!componentState.skip_bound && componentState.bound[g] && componentState.bound[g](newValue), isInitialUpdate && markDirty(component, g)), h
+        }) : [], componentState.update(), isInitialUpdate = !0, executeAll(componentState.before_update), componentState.fragment = renderFunction ? renderFunction(componentState.ctx) : !1, options.target) {
+        if (options.hydrate) {
+            const childNodes = getChildNodesArray(options.target);
+            componentState.fragment && componentState.fragment.l(childNodes), childNodes.forEach(removeElement)
+        } else componentState.fragment && componentState.fragment.c();
+        options.intro && invokeInitFunction(component.$$.fragment), mountComponent(component, options.target, options.anchor, options.customElement), executePendingUpdates()
     }
-    wn(m)
+    setCurrentComponent(previousComponent)
 }
-class rn {
+class ComponentClass {
     $destroy() {
-        be(this, 1), this.$destroy = ne
+        destroyComponent(this, 1), this.$destroy = noOperation
     }
-    $on(i, n) {
-        if (!Ti(n)) return ne;
-        const l = this.$$.callbacks[i] || (this.$$.callbacks[i] = []);
-        return l.push(n), () => {
-            const s = l.indexOf(n);
-            s !== -1 && l.splice(s, 1)
+    $on(event, callback) {
+        if (!isFunction(callback)) return noOperation;
+        const callbacksList = this.$$.callbacks[event] || (this.$$.callbacks[event] = []);
+        return callbacksList.push(callback), () => {
+            const s = callbacksList.indexOf(callback);
+            s !== -1 && callbacksList.splice(s, 1)
         }
     }
     $set(i) {
-        this.$$set && !d1(i) && (this.$$.skip_bound = !0, this.$$set(i), this.$$.skip_bound = !1)
+        this.$$set && !isObjectEmpty(i) && (this.$$.skip_bound = !0, this.$$set(i), this.$$.skip_bound = !1)
     }
 }
-let ki;
-const b1 = new Uint8Array(16);
+let cryptoRandomFunction;
+const randomBytes = new Uint8Array(16);
 
-function x1() {
-    if (!ki && (ki = typeof crypto < "u" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto), !ki)) throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
-    return ki(b1)
+function getRNGValues() {
+    if (!cryptoRandomFunction && (cryptoRandomFunction = typeof crypto < "u" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto), !cryptoRandomFunction)) throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    return cryptoRandomFunction(randomBytes)
 }
-const ge = [];
-for (let f = 0; f < 256; ++f) ge.push((f + 256).toString(16).slice(1));
+const hexArray = [];
+for (let index = 0; index < 256; ++index) hexArray.push((index + 256).toString(16).slice(1));
 
-function k1(f, i = 0) {
-    return (ge[f[i + 0]] + ge[f[i + 1]] + ge[f[i + 2]] + ge[f[i + 3]] + "-" + ge[f[i + 4]] + ge[f[i + 5]] + "-" + ge[f[i + 6]] + ge[f[i + 7]] + "-" + ge[f[i + 8]] + ge[f[i + 9]] + "-" + ge[f[i + 10]] + ge[f[i + 11]] + ge[f[i + 12]] + ge[f[i + 13]] + ge[f[i + 14]] + ge[f[i + 15]]).toLowerCase()
+function formatUUID(f, i = 0) {
+    return (hexArray[f[i + 0]] + hexArray[f[i + 1]] + hexArray[f[i + 2]] + hexArray[f[i + 3]] + "-" + hexArray[f[i + 4]] + hexArray[f[i + 5]] + "-" + hexArray[f[i + 6]] + hexArray[f[i + 7]] + "-" + hexArray[f[i + 8]] + hexArray[f[i + 9]] + "-" + hexArray[f[i + 10]] + hexArray[f[i + 11]] + hexArray[f[i + 12]] + hexArray[f[i + 13]] + hexArray[f[i + 14]] + hexArray[f[i + 15]]).toLowerCase()
 }
-const S1 = typeof crypto < "u" && crypto.randomUUID && crypto.randomUUID.bind(crypto),
-    Mu = {
-        randomUUID: S1
+const randomUUIDFunction = typeof crypto < "u" && crypto.randomUUID && crypto.randomUUID.bind(crypto),
+    UUIDUtils = {
+        randomUUID: randomUUIDFunction
     };
 
-function Oi(f, i, n) {
-    if (Mu.randomUUID && !i && !f) return Mu.randomUUID();
-    f = f || {};
-    const l = f.random || (f.rng || x1)();
-    if (l[6] = l[6] & 15 | 64, l[8] = l[8] & 63 | 128, i) {
-        n = n || 0;
-        for (let s = 0; s < 16; ++s) i[n + s] = l[s];
-        return i
+function generateUUID(options, array, buffer) {
+    if (UUIDUtils.randomUUID && !array && !options) return UUIDUtils.randomUUID();
+    options = options || {};
+    const l = options.random || (options.rng || getRNGValues)();
+    if (l[6] = l[6] & 15 | 64, l[8] = l[8] & 63 | 128, array) {
+        buffer = buffer || 0;
+        for (let index = 0; index < 16; ++index) array[buffer + index] = l[index];
+        return array
     }
-    return k1(l)
+    return formatUUID(l)
 }
 
-function A1(f) {
-    let i, n, l, s, d, u, a, m, _, c, g, h;
-    return {
-        c() {
-            i = ot("div"), n = ot("details"), n.innerHTML = `<summary class="svelte-1iuev41">Saved your license key but still seeing this message?</summary>
-        <div class="svelte-1iuev41"><p>Each license key is tied to a specific user. If you have got the
-                license key from someone else, please get your own license key.</p>
-            <p>If you have reinstalled the extension and are owning a license
-                key, please
-                <a href="mailto:replika@wolf.gdn?subject=Reinstall">contact me</a>
-                with your license key from the email address you used to purchase
-                the license key.</p></div>`, l = Et(), s = ot("details"), d = ot("summary"), d.textContent = "Don't have a license key but have donated to the project before?", u = Et(), a = ot("div"), m = It(`You can sign in
-            `), _ = ot("span"), _.textContent = "here", c = It(`
-            and this message will go away.`), dt(n, "class", "svelte-1iuev41"), dt(d, "class", "svelte-1iuev41"), dt(_, "class", "underline cursor-pointer"), dt(a, "class", "svelte-1iuev41"), dt(s, "class", "svelte-1iuev41"), dt(i, "class", "space-y-3 text-xs")
-        },
-        m(p, x) {
-            pt(p, i, x), q(i, n), q(i, l), q(i, s), q(s, d), q(s, u), q(s, a), q(a, m), q(a, _), q(a, c), g || (h = [le(_, "click", replikaExportKey.openLoginPage), le(_, "keydown", replikaExportKey.openLoginPage)], g = !0)
-        },
-        p: ne,
-        i: ne,
-        o: ne,
-        d(p) {
-            p && ht(i), g = !1, tn(h)
-        }
-    }
-}
-class E1 extends rn {
-    constructor(i) {
-        super(), nn(this, i, null, A1, en, {})
-    }
+class MainLicenseClass extends ComponentClass {
 }
 
-function $u(f) {
-    let i, n;
-    return {
-        c() {
-            i = ot("div"), n = It(f[0]), dt(i, "class", "bg-red-9 p-3")
-        },
-        m(l, s) {
-            pt(l, i, s), q(i, n)
-        },
-        p(l, s) {
-            s & 1 && ae(n, l[0])
-        },
-        d(l) {
-            l && ht(i)
-        }
-    }
-}
-
-function C1(f) {
-    let i, n, l, s, d, u, a, m, _, c, g, h, p, x, y, A, S, C, T, L, B, G, W = f[0] && $u(f);
-    return T = new E1({}), {
-        c() {
-            i = ot("div"), n = ot("p"), n.textContent = `To keep development going, I am asking you to get a license key for a
-        small donation. 💖`, l = Et(), s = ot("p"), s.innerHTML = `You can get one
-        <a href="https://payhip.com/buy?link=4MIkv" target="_blank" rel="noreferrer noopener">here</a>.`, d = Et(), u = ot("p"), u.textContent = "Once you have got your license key, please enter it below.", a = Et(), m = ot("p"), m.textContent = "Thank you.", _ = Et(), c = ot("p"), c.textContent = "~ The Extension Developer", g = Et(), h = ot("p"), p = ot("input"), x = Et(), y = ot("button"), y.textContent = "Save", A = Et(), W && W.c(), S = Et(), C = ot("div"), Ee(T.$$.fragment), dt(c, "class", "italic ml-4 opacity-75"), dt(p, "type", "text"), dt(p, "class", "w-full"), dt(p, "placeholder", "License Key <3"), dt(y, "class", "min-w-20"), dt(h, "class", "flex space-x-2 pt-12"), dt(C, "class", "pt-4"), dt(i, "class", "space-y-2")
-        },
-        m(V, Z) {
-            pt(V, i, Z), q(i, n), q(i, l), q(i, s), q(i, d), q(i, u), q(i, a), q(i, m), q(i, _), q(i, c), q(i, g), q(i, h), q(h, p), Ln(p, f[1].licenseKey), q(h, x), q(h, y), q(i, A), W && W.m(i, null), q(i, S), q(i, C), ye(T, C, null), L = !0, B || (G = [le(p, "input", f[3]), le(y, "click", f[2])], B = !0)
-        },
-        p(V, [Z]) {
-            Z & 2 && p.value !== V[1].licenseKey && Ln(p, V[1].licenseKey), V[0] ? W ? W.p(V, Z) : (W = $u(V), W.c(), W.m(i, S)) : W && (W.d(1), W = null)
-        },
-        i(V) {
-            L || (Ht(T.$$.fragment, V), L = !0)
-        },
-        o(V) {
-            qt(T.$$.fragment, V), L = !1
-        },
-        d(V) {
-            V && ht(i), W && W.d(), be(T), B = !1, tn(G)
-        }
-    }
-}
-
-function I1(f, i, n) {
-    let {
-        error: l = null
-    } = i, s = {
-        userId: "",
-        licenseKey: ""
-    };
-    chrome.runtime && chrome.runtime.id && chrome.storage.sync.get("details", a => {
-        a.details && (a.details.userId && n(1, s.userId = a.details.userId, s), a.details.licenseKey && n(1, s.licenseKey = a.details.licenseKey, s))
-    });
-    async function d() {
-        s.userId || n(1, s.userId = Oi(), s), n(1, s.licenseKey = s.licenseKey.trim(), s), await chrome.storage.sync.set({
-            details: s
-        }), window.location.reload()
-    }
-
-    function u() {
-        s.licenseKey = this.value, n(1, s)
-    }
-    return f.$$set = a => {
-        "error" in a && n(0, l = a.error)
-    }, [l, s, d, u]
-}
-class kl extends rn {
-    constructor(i) {
-        super(), nn(this, i, I1, C1, en, {
-            error: 0
-        })
-    }
-}
-var eo = {},
-    T1 = {
+var cryptographyHelpers = {},
+    moduleExports = {
         get exports() {
-            return eo
+            return cryptographyHelpers
         },
-        set exports(f) {
-            eo = f
+        set exports(value) {
+            cryptographyHelpers = value
         }
     },
     no = {},
@@ -569,51 +465,33 @@ var eo = {},
         }
     };
 (function() {
-    var f = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-        i = {
-            rotl: function(n, l) {
-                return n << l | n >>> 32 - l
-            },
-            rotr: function(n, l) {
-                return n << 32 - l | n >>> l
-            },
-            endian: function(n) {
-                if (n.constructor == Number) return i.rotl(n, 8) & 16711935 | i.rotl(n, 24) & 4278255360;
-                for (var l = 0; l < n.length; l++) n[l] = i.endian(n[l]);
-                return n
-            },
-            randomBytes: function(n) {
-                for (var l = []; n > 0; n--) l.push(Math.floor(Math.random() * 256));
-                return l
-            },
-            bytesToWords: function(n) {
-                for (var l = [], s = 0, d = 0; s < n.length; s++, d += 8) l[d >>> 5] |= n[s] << 24 - d % 32;
-                return l
-            },
-            wordsToBytes: function(n) {
-                for (var l = [], s = 0; s < n.length * 32; s += 8) l.push(n[s >>> 5] >>> 24 - s % 32 & 255);
-                return l
-            },
-            bytesToHex: function(n) {
-                for (var l = [], s = 0; s < n.length; s++) l.push((n[s] >>> 4).toString(16)), l.push((n[s] & 15).toString(16));
-                return l.join("")
-            },
-            hexToBytes: function(n) {
-                for (var l = [], s = 0; s < n.length; s += 2) l.push(parseInt(n.substr(s, 2), 16));
-                return l
-            },
-            bytesToBase64: function(n) {
-                for (var l = [], s = 0; s < n.length; s += 3)
-                    for (var d = n[s] << 16 | n[s + 1] << 8 | n[s + 2], u = 0; u < 4; u++) s * 8 + u * 6 <= n.length * 8 ? l.push(f.charAt(d >>> 6 * (3 - u) & 63)) : l.push("=");
-                return l.join("")
-            },
-            base64ToBytes: function(n) {
-                n = n.replace(/[^A-Z0-9+\/]/ig, "");
-                for (var l = [], s = 0, d = 0; s < n.length; d = ++s % 4) d != 0 && l.push((f.indexOf(n.charAt(s - 1)) & Math.pow(2, -2 * d + 8) - 1) << d * 2 | f.indexOf(n.charAt(s)) >>> 6 - d * 2);
-                return l
-            }
-        };
-    O1.exports = i
+    var icryptoUtils = {
+        rotateLeft: function(n, l) {
+            return n << l | n >>> 32 - l
+        },
+        endian: function(n) {
+            if (n.constructor == Number) return icryptoUtils.rotateLeft(n, 8) & 16711935 | icryptoUtils.rotateLeft(n, 24) & 4278255360;
+            for (var l = 0; l < n.length; l++) n[l] = icryptoUtils.endian(n[l]);
+            return n
+        },
+        randomBytes: function(n) {
+            for (var l = []; n > 0; n--) l.push(Math.floor(Math.random() * 256));
+            return l
+        },
+        bytesToWords: function(n) {
+            for (var l = [], s = 0, d = 0; s < n.length; s++, d += 8) l[d >>> 5] |= n[s] << 24 - d % 32;
+            return l
+        },
+        wordsToBytes: function(n) {
+            for (var l = [], s = 0; s < n.length * 32; s += 8) l.push(n[s >>> 5] >>> 24 - s % 32 & 255);
+            return l
+        },
+        bytesToHex: function(n) {
+            for (var l = [], s = 0; s < n.length; s++) l.push((n[s] >>> 4).toString(16)), l.push((n[s] & 15).toString(16));
+            return l.join("")
+        }
+    };
+    O1.exports = icryptoUtils
 })();
 var ro = {
         utf8: {
@@ -636,20 +514,20 @@ var ro = {
         }
     },
     Hu = ro;
-var R1 = function(f) {
-    return f != null && (Sl(f) || L1(f) || !!f._isBuffer)
+var isValidBuffer = function(buffer) {
+    return buffer != null && (isNativeBuffer(buffer) || L1(buffer) || !!buffer._isBuffer)
 };
 
-function Sl(f) {
-    return !!f.constructor && typeof f.constructor.isBuffer == "function" && f.constructor.isBuffer(f)
+function isNativeBuffer(buffer) {
+    return !!buffer.constructor && typeof buffer.constructor.isBuffer == "function" && buffer.constructor.isBuffer(buffer)
 }
 
 function L1(f) {
-    return typeof f.readFloatLE == "function" && typeof f.slice == "function" && Sl(f.slice(0, 0))
+    return typeof f.readFloatLE == "function" && typeof f.slice == "function" && isNativeBuffer(f.slice(0, 0))
 }(function() {
     var f = no,
         i = Hu.utf8,
-        n = R1,
+        n = isValidBuffer,
         l = Hu.bin,
         s = function(d, u) {
             d.constructor == String ? u && u.encoding === "binary" ? d = l.stringToBytes(d) : d = i.stringToBytes(d) : n(d) ? d = Array.prototype.slice.call(d, 0) : !Array.isArray(d) && d.constructor !== Uint8Array && (d = d.toString());
@@ -676,13 +554,13 @@ function L1(f) {
     }, s._ii = function(d, u, a, m, _, c, g) {
         var h = d + (a ^ (u | ~m)) + (_ >>> 0) + g;
         return (h << c | h >>> 32 - c) + u
-    }, s._blocksize = 16, s._digestsize = 16, T1.exports = function(d, u) {
+    }, s._blocksize = 16, s._digestsize = 16, moduleExports.exports = function(d, u) {
         if (d == null) throw new Error("Illegal argument " + d);
         var a = f.wordsToBytes(s(d, u));
         return u && u.asBytes ? a : u && u.asString ? l.bytesToString(a) : f.bytesToHex(a)
     }
 })();
-const D1 = {
+const userAuthData = {
     userId: "",
     deviceId: "",
     authToken: "",
@@ -691,114 +569,172 @@ const D1 = {
     botName: ""
 };
 
-function zr(f) {
-    const i = eo(`time_covfefe_prefix=2020_${f.deviceId}`);
+function createRequestHeaders(userData) {
+    const i = cryptographyHelpers(`time_covfefe_prefix=2020_${userData.deviceId}`);
     return {
-        "x-user-id": f.userId,
-        "x-auth-token": f.authToken,
-        "x-device-id": f.deviceId,
+        "x-user-id": userData.userId,
+        "x-auth-token": userData.authToken,
+        "x-device-id": userData.deviceId,
         "x-timestamp-hash": i
     }
 }
-async function hr() {
-    const f = Object.assign({}, D1),
-        i = ["https://my.replika.com/", "https://my.replika.ai/"],
-        n = {
+
+async function swapActiveTab(targetTabId) {
+    const tabsAPI = typeof browser !== 'undefined' ? browser.tabs : chrome.tabs;
+    const tabs = await tabsAPI.query({ currentWindow: true });
+    const targetTab = tabs.find(tab => tab.id === targetTabId);
+    if (!targetTab) {
+        console.error(`Target tab with ID ${targetTabId} not found.`);
+        return;
+    }
+    const activeTab = tabs.find(tab => tab.active);
+    if (!activeTab) {
+        console.error("No active tab found.");
+        return;
+    }
+    await tabsAPI.update(activeTab.id, { active: false });
+    await tabsAPI.update(targetTab.id, { active: true });
+}
+
+async function waitForTabLoad(tabId) {
+    return new Promise((resolve) => {
+        const tabsAPI = typeof browser !== 'undefined' ? browser.tabs : chrome.tabs;
+
+        const checkTabStatus = async (tabId) => {
+            const tab = await tabsAPI.get(tabId);
+            if (tab.status === 'complete') {
+                resolve();
+            } else {
+                setTimeout(() => checkTabStatus(tabId), 500);
+            }
+        };
+
+        checkTabStatus(tabId);
+    });
+}
+
+async function extractAuthData() {
+    const userData = Object.assign({}, userAuthData),
+        urlList = ["https://my.replika.com/", "https://my.replika.ai/"],
+        result = {
             error: {},
             data: null
         };
-    for (const l of i) {
+
+    const isFirefox = typeof browser !== "undefined";
+    const tabsAPI = isFirefox ? browser.tabs : chrome.tabs;
+    const scriptingAPI = isFirefox ? browser.scripting : chrome.scripting;
+
+    for (const url of urlList) {
         const {
-            id: s
-        } = await chrome.tabs.create({
-            url: l,
-            active: !1
-        }), d = await chrome.scripting.executeScript({
-            target: {
-                tabId: s
-            },
-            args: [f],
-            func: m => {
-                let _ = null;
-                try {
-                    const c = localStorage.getItem("auth"),
-                        g = JSON.parse(c);
-                    m.userId = g.userId, m.deviceId = g.deviceId, m.authToken = g.authToken;
-                    const h = localStorage.getItem("ws"),
-                        p = JSON.parse(h);
-                    m.chatId = p.chatId;
-                    const x = localStorage.getItem("profile"),
-                        y = JSON.parse(x);
-                    m.userName = y.userProfile.first_name, m.botName = y.bot.name
-                } catch (c) {
-                    _ = JSON.stringify(c, Object.getOwnPropertyNames(c))
-                }
-                return {
-                    error: _,
-                    data: m
-                }
-            }
+            id: tabId
+        } = await tabsAPI.create({
+            url: url,
+            active: false
         });
-        chrome.tabs.remove(s);
+        await waitForTabLoad(tabId);
+        await swapActiveTab(tabId);
+        //console.log("here");
+        //console.log(tabId);
+        //console.log(url);
+        let executionResult = null;
+        try {
+            executionResult = await scriptingAPI.executeScript({
+                target: {
+                    tabId: tabId
+                },
+                args: [userData],
+                func: userData => {
+                    let error = null;
+                    try {
+                        const authData = localStorage.getItem("auth"),
+                            parsedAuthData = JSON.parse(authData);
+                        userData.userId = parsedAuthData.userId;
+                        userData.deviceId = parsedAuthData.deviceId;
+                        userData.authToken = parsedAuthData.authToken;
+                        const chatData = localStorage.getItem("ws"),
+                            parsedChatData = JSON.parse(chatData);
+                        userData.chatId = parsedChatData.chatId;
+                        const profileData = localStorage.getItem("profile"),
+                            parsedProfileData = JSON.parse(profileData);
+                        userData.userName = parsedProfileData.userProfile.first_name;
+                        userData.botName = parsedProfileData.bot.name;
+                    } catch (error) {
+                        console.error("Error extracting user data from localStorage:", error);
+                        error = JSON.stringify(error, Object.getOwnPropertyNames(error));
+                    }
+                    return {
+                        error: error,
+                        data: userData
+                    };
+                }
+            });
+        } catch (wrappedErr) {
+            console.error("Error executing script:", wrappedErr);
+        }
+        //console.log("here2");
+        tabsAPI.remove(tabId);
         const {
-            error: u,
-            data: a
-        } = d[0].result;
-        if (u) {
-            n.error[l] = u;
+            error: error2,
+            data: resultedUserData
+        } = executionResult[0].result;
+        if (error2) {
+            result.error[url] = error2;
             continue
         }
-        n.data = a;
+        result.data = resultedUserData;
         break
     }
-    if (!n.data) return n;
-    n.error = {};
-    for (const l of Object.keys(f)) n.data[l] || (n.error[l] = "Could not find data");
-    return Object.keys(n.error).length === 0 && (n.error = null), n
+    if (!result.data) return result;
+    result.error = {};
+    for (const l of Object.keys(userData)) result.data[l] || (result.error[l] = "Could not find data");
+    return Object.keys(result.error).length === 0 && (result.error = null), result
 }
-var Ct = (f => (f.Idle = "idle", f.Working = "working", f.Stopping = "stopping", f))(Ct || {}),
-    ee = (f => (f.TXT = "txt", f.HTML = "html", f.CSV = "csv", f.JSON = "json", f.CHARACTER_AI = "character.ai", f))(ee || {});
+var ExportStatus = (status => (status.Idle = "idle", status.Working = "working", status.Stopping = "stopping", status))(ExportStatus || {}),
+    eeExportFormat = (format => (format.TXT = "txt", format.HTML = "html", format.CSV = "csv", format.JSON = "json", format.CHARACTER_AI = "character.ai", format))(eeExportFormat || {});
 
-function Me(f, i, n) {
-    const l = document.createElement("a"),
-        s = new Blob([f], {
-            type: i
+function downloadContent(content, mineType, fileName) {
+    const anchor = document.createElement("a"),
+        blob = new Blob([content], {
+            type: mineType
         });
-    l.href = URL.createObjectURL(s), l.download = n, l.click()
+    anchor.href = URL.createObjectURL(blob), anchor.download = fileName, anchor.click()
 }
 
-function ao(f) {
-    function i(s) {
-        return s.includes('"') && (s = s.replace(/"/g, '""')), `"${s}"`
+function convertToCSV(data) {
+    function escapeCSVValue(value) {
+        return value.includes('"') && (value = value.replace(/"/g, '""')), `"${value}"`
     }
-    const n = Object.keys(f[0]).map(i),
-        l = f.map(s => Object.values(s).map(d => i(d)));
-    return [n, ...l].map(s => s.join(",")).join(`
+    const headers = Object.keys(data[0]).map(escapeCSVValue),
+        rows = data.map(s => Object.values(s).map(d => escapeCSVValue(d)));
+    return [headers, ...rows].map(s => s.join(",")).join(`
 `)
 }
 
-function Ri(f, i) {
-    const n = new Date().toISOString().split("T")[0];
-    return `replika-${f}-export-${n}.${i}`
+function generateFileName(exportType, ext) {
+    const currDate = new Date().toISOString().split("T")[0];
+    return `replika-${exportType}-export-${currDate}.${ext}`
 }
-async function z1(f, i) {
-    const n = await getAllMessages();
-    if (!n) return;
-    const l = n.filter(u => u.content.type === "text"),
-        s = Ri("chat", f),
-        d = {
-            Customer: i.userName,
-            Robot: i.botName
+async function exportMessages(format, userInfo) {
+    const messages = await getAllMessages();
+    if (!messages) return;
+    const txtMessages = messages.filter(u => u.content.type === "text"),
+        fileName = generateFileName("chat", format),
+        roles = {
+            Customer: userInfo.userName,
+            Robot: userInfo.botName
         };
-    switch (f) {
-        case ee.TXT: {
-            const u = l.map(a => `${new Date(a.meta.timestamp).toLocaleString()} ${d[a.meta.nature]}: ${a.content.text}`).join(`
+    switch (format) {
+        case eeExportFormat.TXT:
+            {
+                const txtData = txtMessages.map(a => `${new Date(a.meta.timestamp).toLocaleString()} ${roles[a.meta.nature]}: ${a.content.text}`).join(`
 `);
-            Me(u, "text/plain", s);
-            break
-        }
-        case ee.HTML: {
-            const u = `
+                downloadContent(txtData, "text/plain", fileName);
+                break
+            }
+        case eeExportFormat.HTML:
+            {
+                const htmlData = `
       <table>
       <thead>
         <tr>
@@ -808,918 +744,1171 @@ async function z1(f, i) {
         </tr>
       </thead>
       <tbody>
-        ${l.map(a=>`
+        ${txtMessages.map(a=>`
           <tr>
             <th>${new Date(a.meta.timestamp).toLocaleString()}</th>
-            <td>${d[a.meta.nature]}</td>
+            <td>${roles[a.meta.nature]}</td>
             <td>${a.content.text}</td>
           </tr>`).join("")}
       </tbody>
       </table>
       `;
-            Me(u, "text/html", s);
+            downloadContent(htmlData, "text/html", fileName);
             break
         }
-        case ee.CSV: {
-            const u = ao(l.map(a => ({
+        case eeExportFormat.CSV: {
+            const csvData = convertToCSV(txtMessages.map(a => ({
                 time: new Date(a.meta.timestamp).toLocaleString(),
-                sender: d[a.meta.nature],
+                sender: roles[a.meta.nature],
                 message: a.content.text
             })));
-            Me(u, "text/csv", s);
+            downloadContent(csvData, "text/csv", fileName);
             break
         }
-        case ee.JSON: {
-            const u = JSON.stringify(l, null, 2);
-            Me(u, "application/json", s);
+        case eeExportFormat.JSON: {
+            const jsonData = JSON.stringify(txtMessages, null, 2);
+            downloadContent(jsonData, "application/json", fileName);
             break
         }
-        case ee.CHARACTER_AI: {
-            const u = {
+        case eeExportFormat.CHARACTER_AI: {
+            const caiData = {
                     Customer: "{{user}}",
                     Robot: "{{char}}"
                 },
-                a = l.map(m => [u[m.meta.nature], m.content.text.replaceAll(i.userName, u.Customer).replaceAll(i.botName, u.Robot)].join(": ")).join(`
+                caiDatatxt = txtMessages.map(m => [caiData[m.meta.nature], m.content.text.replaceAll(userInfo.userName, caiData.Customer).replaceAll(userInfo.botName, caiData.Robot)].join(": ")).join(`
 `);
-            Me(a, "text/plain", s.replace(f, "txt"));
+            downloadContent(caiDatatxt, "text/plain", fileName.replace(format, "txt"));
             break
         }
         default:
             return
     }
 }
-const B1 = f => ({}),
-    Zu = f => ({}),
-    F1 = f => ({}),
-    Gu = f => ({}),
-    N1 = f => ({}),
-    Ku = f => ({});
+const createExport = f => ({}),
+    fetchData = f => ({}),
+    renderContent = f => ({}),
+    getContent = f => ({}),
+    manageData = f => ({}),
+    applySettings = f => ({});
 
-function U1(f) {
-    let i, n, l, s, d, u, a, m, _, c, g;
-    const h = f[2].head,
-        p = qs(h, f, f[1], Ku),
-        x = f[2].caption,
-        y = qs(x, f, f[1], Gu),
-        A = f[2].body,
-        S = qs(A, f, f[1], Zu);
+function renderExportComponent(context) {
+    let divElement1, divElement2, divElement3, txtNode, spaceNode, spaceNode2, divElement4, divElement5, spaceNode3, divElement6, g;
+    const header = context[2].head,
+        headerContent = callIfExists(header, context, context[1], applySettings),
+        capitionElement = context[2].caption,
+        capitaionContent = callIfExists(capitionElement, context, context[1], getContent),
+        bodyElement = context[2].body,
+        bodyContent = callIfExists(bodyElement, context, context[1], fetchData);
     return {
         c() {
-            i = ot("div"), n = ot("div"), l = ot("div"), s = It(f[0]), d = Et(), p && p.c(), u = Et(), a = ot("div"), m = ot("div"), y && y.c(), _ = Et(), c = ot("div"), S && S.c(), dt(l, "class", "text-2xl font-bold"), dt(n, "class", "flex justify-between items-center"), dt(m, "class", "opacity-80"), dt(c, "class", "font-mono"), dt(a, "class", "space-y-4"), dt(i, "class", "border-1 border-white border-opacity-25 p-4 rounded-2xl space-y-4")
+            divElement1 = createElement("div");
+            divElement2 = createElement("div");
+            divElement3 = createElement("div");
+            txtNode = createTextNode(context[0]);
+            spaceNode = createSpaceTextNode();
+            headerContent && headerContent.c();
+            spaceNode2 = createSpaceTextNode();
+            divElement4 = createElement("div");
+            divElement5 = createElement("div");
+            capitaionContent && capitaionContent.c();
+            spaceNode3 = createSpaceTextNode();
+            divElement6 = createElement("div");
+            bodyContent && bodyContent.c();
+            setAttribute(divElement3, "class", "text-2xl font-bold");
+            setAttribute(divElement2, "class", "flex justify-between items-center");
+            setAttribute(divElement5, "class", "opacity-80");
+            setAttribute(divElement6, "class", "font-mono");
+            setAttribute(divElement4, "class", "space-y-4");
+            setAttribute(divElement1, "class", "border-1 border-white border-opacity-25 p-4 rounded-2xl space-y-4")
         },
-        m(C, T) {
-            pt(C, i, T), q(i, n), q(n, l), q(l, s), q(n, d), p && p.m(n, null), q(i, u), q(i, a), q(a, m), y && y.m(m, null), q(a, _), q(a, c), S && S.m(c, null), g = !0
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement1, anchor);
+            appendChild(divElement1, divElement2);
+            appendChild(divElement2, divElement3);
+            appendChild(divElement3, txtNode);
+            appendChild(divElement2, spaceNode);
+            headerContent && headerContent.m(divElement2, null);
+            appendChild(divElement1, spaceNode2);
+            appendChild(divElement1, divElement4);
+            appendChild(divElement4, divElement5);
+            capitaionContent && capitaionContent.m(divElement5, null);
+            appendChild(divElement4, spaceNode3);
+            appendChild(divElement4, divElement6);
+            bodyContent && bodyContent.m(divElement6, null);
+            g = !0
         },
-        p(C, [T]) {
-            (!g || T & 1) && ae(s, C[0]), p && p.p && (!g || T & 2) && Ys(p, h, C, C[1], g ? js(h, C[1], T, N1) : Js(C[1]), Ku), y && y.p && (!g || T & 2) && Ys(y, x, C, C[1], g ? js(x, C[1], T, F1) : Js(C[1]), Gu), S && S.p && (!g || T & 2) && Ys(S, A, C, C[1], g ? js(A, C[1], T, B1) : Js(C[1]), Zu)
+        p(newState, [dirtyFlags]) {
+            (!g || dirtyFlags & 1) && updateWholeTextNode(txtNode, newState[0]);
+            headerContent && headerContent.p && (!g || dirtyFlags & 2) && updateIfExists(headerContent, header, newState, newState[1], g ? computeDirtyFlag(header, newState[1], dirtyFlags, manageData) : allocateMemory(newState[1]), applySettings);
+            capitaionContent && capitaionContent.p && (!g || dirtyFlags & 2) && updateIfExists(capitaionContent, capitionElement, newState, newState[1], g ? computeDirtyFlag(capitionElement, newState[1], dirtyFlags, renderContent) : allocateMemory(newState[1]), getContent);
+            bodyContent && bodyContent.p && (!g || dirtyFlags & 2) && updateIfExists(bodyContent, bodyElement, newState, newState[1], g ? computeDirtyFlag(bodyElement, newState[1], dirtyFlags, createExport) : allocateMemory(newState[1]), fetchData)
         },
-        i(C) {
-            g || (Ht(p, C), Ht(y, C), Ht(S, C), g = !0)
+        i(isIntro) {
+            g || (invokeInitFunction(headerContent, isIntro), invokeInitFunction(capitaionContent, isIntro), invokeInitFunction(bodyContent, isIntro), g = !0)
         },
-        o(C) {
-            qt(p, C), qt(y, C), qt(S, C), g = !1
+        o(isOutro) {
+            handlePromise(headerContent, isOutro);
+            handlePromise(capitaionContent, isOutro);
+            handlePromise(bodyContent, isOutro);
+            g = !1
         },
-        d(C) {
-            C && ht(i), p && p.d(C), y && y.d(C), S && S.d(C)
+        d(detach) {
+            detach && removeElement(divElement1);
+            headerContent && headerContent.d(detach);
+            capitaionContent && capitaionContent.d(detach);
+            bodyContent && bodyContent.d(detach)
         }
     }
 }
 
-function P1(f, i, n) {
+function initializeComponentState(state, props, context) {
     let {
-        $$slots: l = {},
-        $$scope: s
-    } = i, {
-        title: d
-    } = i;
-    return f.$$set = u => {
-        "title" in u && n(0, d = u.title), "$$scope" in u && n(1, s = u.$$scope)
-    }, [d, s, l]
+        $$slots: slots = {},
+        $$scope: scope
+    } = props, {
+        title: componetTitle
+    } = props;
+    return state.$$set = updatedProps => {
+        "title" in updatedProps && context(0, componetTitle = updatedProps.title), "$$scope" in updatedProps && context(1, scope = updatedProps.$$scope)
+    }, [componetTitle, scope, slots]
 }
-class dr extends rn {
-    constructor(i) {
-        super(), nn(this, i, P1, U1, en, {
+class ExportComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, initializeComponentState, renderExportComponent, isEqual, {
             title: 0
         })
     }
 }
 
-function qu(f) {
-    let i, n, l, s, d, u, a, m, _, c, g, h, p, x, y, A, S, C = JSON.stringify(f[0], null, 2) + "",
-        T;
+function renderErrorComponent(f) {
+    let divElement1, pElement1, spaceNode, pElement2, spaceNode2, pElement3, spaceNode3, pElement4, spaceNode4, pElement5, spaceNode5, pElement6, spaceNode6, detailsElement1, summElement1, spaceNode7, preElement1, C = JSON.stringify(f[0], null, 2) + "",
+        txtNode1;
     return {
         c() {
-            i = ot("div"), n = ot("p"), n.textContent = "Something went wrong", l = Et(), s = ot("p"), s.textContent = `Replika might change their service at any point of time causing this
-            extension to not work anymore - in this case i have to figure out
-            what they have changed to make it work again, just reach out if this
-            is the case.`, d = Et(), u = ot("p"), u.innerHTML = `Please make sure you are signed in to either
+            divElement1 = createElement("div");
+            pElement1 = createElement("p");
+            pElement1.textContent = "Something went wrong";
+            spaceNode = createSpaceTextNode();
+            pElement2 = createElement("p");
+            pElement2.textContent = `Replika might change their service at any point of time causing this extension to not work anymore - in this case i have to figure outwhat they have changed to make it work again, just reach out if this is the case.`;
+            spaceNode2 = createSpaceTextNode();
+            pElement3 = createElement("p");
+            pElement3.innerHTML = `Please make sure you are signed in to either
             <a href="https://my.replika.com" target="_blank" rel="noopener noreferrer">my.replika.com</a>
             or
-            <a href="https://my.replika.ai" target="_blank" rel="noopener noreferrer">my.replika.ai</a>`, a = Et(), m = ot("p"), m.textContent = `If you are signed in already, please try to sign out and sign in
-            again.`, _ = Et(), c = ot("p"), c.innerHTML = `If the issue persist, please reach me at
-            <a href="mailto:replika@wolf.gdn?subject=Error">replika@wolf.gdn</a> and include the error details below.`, g = Et(), h = ot("p"), h.textContent = `Make sure to remove any sensitive information before sending the
-            email.`, p = Et(), x = ot("details"), y = ot("summary"), y.textContent = "Error details", A = Et(), S = ot("pre"), T = It(C), dt(n, "class", "font-bold"), dt(S, "class", "whitespace-pre-line break-all"), dt(i, "class", "bg-red-9 font-mono p-4 space-y-2")
+            <a href="https://my.replika.ai" target="_blank" rel="noopener noreferrer">my.replika.ai</a>`;
+            spaceNode3 = createSpaceTextNode();
+            pElement4 = createElement("p");
+            pElement4.textContent = `If you are signed in already, please try to sign out and sign in again.`;
+            spaceNode4 = createSpaceTextNode();
+            pElement5 = createElement("p");
+            pElement5.innerHTML = `If the issue persist, please reach me at <a href="mailto:replika@wolf.gdn?subject=Error">replika@wolf.gdn</a> and include the error details below.`;
+            spaceNode5 = createSpaceTextNode();
+            pElement6 = createElement("p");
+            pElement6.textContent = `Make sure to remove any sensitive information before sending the email.`;
+            spaceNode6 = createSpaceTextNode();
+            detailsElement1 = createElement("details");
+            summElement1 = createElement("summary");
+            summElement1.textContent = "Error details";
+            spaceNode7 = createSpaceTextNode();
+            preElement1 = createElement("pre");
+            txtNode1 = createTextNode(C);
+            setAttribute(pElement1, "class", "font-bold");
+            setAttribute(preElement1, "class", "whitespace-pre-line break-all");
+            setAttribute(divElement1, "class", "bg-red-9 font-mono p-4 space-y-2")
         },
-        m(L, B) {
-            pt(L, i, B), q(i, n), q(i, l), q(i, s), q(i, d), q(i, u), q(i, a), q(i, m), q(i, _), q(i, c), q(i, g), q(i, h), q(i, p), q(i, x), q(x, y), q(x, A), q(x, S), q(S, T)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement1, anchor);
+            appendChild(divElement1, pElement1);
+            appendChild(divElement1, spaceNode);
+            appendChild(divElement1, pElement2);
+            appendChild(divElement1, spaceNode2);
+            appendChild(divElement1, pElement3);
+            appendChild(divElement1, spaceNode3);
+            appendChild(divElement1, pElement4);
+            appendChild(divElement1, spaceNode4);
+            appendChild(divElement1, pElement5);
+            appendChild(divElement1, spaceNode5);
+            appendChild(divElement1, pElement6);
+            appendChild(divElement1, spaceNode6);
+            appendChild(divElement1, detailsElement1);
+            appendChild(detailsElement1, summElement1);
+            appendChild(detailsElement1, spaceNode7);
+            appendChild(detailsElement1, preElement1);
+            appendChild(preElement1, txtNode1)
         },
-        p(L, B) {
-            B & 1 && C !== (C = JSON.stringify(L[0], null, 2) + "") && ae(T, C)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 1 && C !== (C = JSON.stringify(newState[0], null, 2) + "") && updateWholeTextNode(txtNode1, C)
         },
-        d(L) {
-            L && ht(i)
+        d(detach) {
+            detach && removeElement(divElement1)
         }
     }
 }
 
-function W1(f) {
-    let i, n = f[0] && qu(f);
+function handleErrorState(state) {
+    let errState, errComponent = state[0] && renderErrorComponent(state);
     return {
         c() {
-            n && n.c(), i = yn()
+            errComponent && errComponent.c();
+            errState = createEmptyTextNode()
         },
-        m(l, s) {
-            n && n.m(l, s), pt(l, i, s)
+        m(parentElement, anchor) {
+            errComponent && errComponent.m(parentElement, anchor);
+            insertBefore(parentElement, errState, anchor)
         },
-        p(l, [s]) {
-            l[0] ? n ? n.p(l, s) : (n = qu(l), n.c(), n.m(i.parentNode, i)) : n && (n.d(1), n = null)
+        p(newState, [dirtyFlags]) {
+            newState[0] ? errComponent ? errComponent.p(newState, dirtyFlags) : (errComponent = renderErrorComponent(newState), errComponent.c(), errComponent.m(errState.parentNode, errState)) : errComponent && (errComponent.d(1), errComponent = null)
         },
-        i: ne,
-        o: ne,
-        d(l) {
-            n && n.d(l), l && ht(i)
+        i: noOperation,
+        o: noOperation,
+        d(detach) {
+            errComponent && errComponent.d(detach);
+            detach && removeElement(errState)
         }
     }
 }
 
-function M1(f, i, n) {
+function initializeErrorHandling(state, props, context) {
     let {
-        error: l = null
-    } = i;
-    return f.$$set = s => {
-        "error" in s && n(0, l = s.error)
-    }, [l]
+        error: errMsg = null
+    } = props;
+    return state.$$set = updatedProps => {
+        "error" in updatedProps && context(0, errMsg = updatedProps.error)
+    }, [errMsg]
 }
-let Al = class extends rn {
-    constructor(i) {
-        super(), nn(this, i, M1, W1, en, {
+let AlErrorComponent = class extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, initializeErrorHandling, handleErrorState, isEqual, {
             error: 0
         })
     }
 };
 
-function ju(f, i, n) {
-    const l = f.slice();
-    return l[16] = i[n], l
+function updateStateWithNewValue(state, array, index) {
+    const newState = state.slice();
+    return newState[16] = array[index], newState
 }
 
-function Yu(f, i, n) {
-    const l = f.slice();
-    return l[19] = i[n], l
+function updateStateWithAnotherValue(state, array, index) {
+    const newState = state.slice();
+    return newState[19] = array[index], newState
 }
 
-function Ju(f) {
-    let i, n = f[19] + "",
-        l;
+function createOptionComponent(state) {
+    let optionElement, n = state[19] + "",
+        txtNode;
     return {
         c() {
-            i = ot("option"), l = It(n), i.__value = f[19], i.value = i.__value
+            optionElement = createElement("option");
+            txtNode = createTextNode(n);
+            optionElement.__value = state[19];
+            optionElement.value = optionElement.__value
         },
-        m(s, d) {
-            pt(s, i, d), q(i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, optionElement, anchor);
+            appendChild(optionElement, txtNode)
         },
-        p: ne,
-        d(s) {
-            s && ht(i)
+        p: noOperation,
+        d(detach) {
+            detach && removeElement(optionElement)
         }
     }
 }
 
-function $1(f) {
-    let i, n, l;
+function createStopBtn(state) {
+    let btnElement, isListenerAdded,l;
     return {
         c() {
-            i = ot("button"), i.textContent = "Stop"
+            btnElement = createElement("button");
+            btnElement.textContent = "Stop"
         },
-        m(s, d) {
-            pt(s, i, d), n || (l = le(i, "click", f[10]), n = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, btnElement, anchor);
+            isListenerAdded || (l = addEventListenerWithCleanup(btnElement, "click", state[10]), isListenerAdded = !0)
         },
-        p: ne,
-        d(s) {
-            s && ht(i), n = !1, l()
+        p: noOperation,
+        d(detach) {
+            detach && removeElement(btnElement);
+            isListenerAdded = !1;
+            l();
         }
     }
 }
 
-function H1(f) {
-    let i, n, l;
+function createStartBtn(state) {
+    let btnElement, isListenerAdded, l;
     return {
         c() {
-            i = ot("button"), i.textContent = "Start"
+            btnElement = createElement("button");
+            btnElement.textContent = "Start"
         },
-        m(s, d) {
-            pt(s, i, d), n || (l = le(i, "click", f[9]), n = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, btnElement, anchor);
+            isListenerAdded || (l = addEventListenerWithCleanup(btnElement, "click", state[9]), isListenerAdded = !0)
         },
-        p: ne,
-        d(s) {
-            s && ht(i), n = !1, l()
+        p: noOperation,
+        d(detach) {
+            detach && removeElement(btnElement);
+            isListenerAdded = !1;
+            l();
         }
     }
 }
 
-function Z1(f) {
-    let i, n, l, s, d, u, a = Object.values(f[8]),
-        m = [];
-    for (let h = 0; h < a.length; h += 1) m[h] = Ju(Yu(f, a, h));
+function createExportStatusComponent(state) {
+    let fieldsetElement, selectElement, l, spaceNode, d, u, a = Object.values(state[8]),
+        optionComponents = [];
+    for (let index = 0; index < a.length; index += 1) optionComponents[index] = createOptionComponent(updateStateWithAnotherValue(state, a, index));
 
     function _(h, p) {
-        if (h[0] === Ct.Idle) return H1;
-        if (h[0] === Ct.Working) return $1
+        if (h[0] === ExportStatus.Idle) return createStartBtn;
+        if (h[0] === ExportStatus.Working) return createStopBtn
     }
-    let c = _(f),
-        g = c && c(f);
+    let c = _(state),
+        g = c && c(state);
     return {
         c() {
-            i = ot("fieldset"), n = ot("select");
-            for (let h = 0; h < m.length; h += 1) m[h].c();
-            s = Et(), g && g.c(), dt(n, "class", "capitalize"), n.disabled = l = f[0] !== Ct.Idle, f[1] === void 0 && cr(() => f[13].call(n)), dt(i, "class", "space-x-1")
+            fieldsetElement = createElement("fieldset");
+            selectElement = createElement("select");
+            for (let index = 0; index < optionComponents.length; index += 1) optionComponents[index].c();
+            spaceNode = createSpaceTextNode();
+            g && g.c();
+            setAttribute(selectElement, "class", "capitalize");
+            selectElement.disabled = l = state[0] !== ExportStatus.Idlel
+            state[1] === void 0 && addBeforeUpdateCallback(() => state[13].call(selectElement));
+            setAttribute(fieldsetElement, "class", "space-x-1")
         },
-        m(h, p) {
-            pt(h, i, p), q(i, n);
-            for (let x = 0; x < m.length; x += 1) m[x].m(n, null);
-            fr(n, f[1]), q(i, s), g && g.m(i, null), d || (u = le(n, "change", f[13]), d = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, fieldsetElement, anchor);
+            appendChild(fieldsetElement, selectElement);
+            for (let index = 0; index < optionComponents.length; index += 1) optionComponents[index].m(selectElement, null);
+            selectOptionByValue(selectElement, state[1]);
+            appendChild(fieldsetElement, spaceNode);
+            g && g.m(fieldsetElement, null);
+            d || (u = addEventListenerWithCleanup(selectElement, "change", state[13]), d = !0)
         },
-        p(h, p) {
-            if (p & 256) {
-                a = Object.values(h[8]);
+        p(newState, dirtyFlags) {
+            if (dirtyFlags & 256) {
+                a = Object.values(newState[8]);
                 let x;
                 for (x = 0; x < a.length; x += 1) {
-                    const y = Yu(h, a, x);
-                    m[x] ? m[x].p(y, p) : (m[x] = Ju(y), m[x].c(), m[x].m(n, null))
+                    const y = updateStateWithAnotherValue(newState, a, x);
+                    optionComponents[x] ? optionComponents[x].p(y, dirtyFlags) : (optionComponents[x] = createOptionComponent(y), optionComponents[x].c(), optionComponents[x].m(selectElement, null))
                 }
-                for (; x < m.length; x += 1) m[x].d(1);
-                m.length = a.length
+                for (; x < optionComponents.length; x += 1) optionComponents[x].d(1);
+                optionComponents.length = a.length
             }
-            p & 1 && l !== (l = h[0] !== Ct.Idle) && (n.disabled = l), p & 258 && fr(n, h[1]), c === (c = _(h)) && g ? g.p(h, p) : (g && g.d(1), g = c && c(h), g && (g.c(), g.m(i, null)))
+            dirtyFlags & 1 && l !== (l = newState[0] !== ExportStatus.Idle) && (selectElement.disabled = l);
+            dirtyFlags & 258 && selectOptionByValue(selectElement, newState[1]);
+            c === (c = _(newState)) && g ? g.p(newState, dirtyFlags) : (g && g.d(1), g = c && c(newState), g && (g.c(), g.m(fieldsetElement, null)))
         },
-        d(h) {
-            h && ht(i), Dn(m, h), g && g.d(), d = !1, u()
+        d(detach) {
+            detach && removeElement(fieldsetElement);
+            callDestroyMethods(optionComponents, detach);
+            g && g.d();
+            d = !1;
+            u()
         }
     }
 }
 
-function G1(f) {
-    let i;
+function createApplicationStatusComponent() {
+    let txtNode;
     return {
         c() {
-            i = It(`will export all messages. Already exported messages will
-                        be overwritten. Depending on the number of messages,
-                        this can take a long time.`)
+            txtNode = createTextNode(`will export all messages. Already exported messages will be overwritten. Depending on the number of messages, this can take a long time.`)
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        d(n) {
-            n && ht(i)
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function K1(f) {
-    let i;
+function createStopWhenOlderThanTimeMessage() {
+    let txtNode;
     return {
         c() {
-            i = It(`will stop when it finds messages older than this time
-                        period. Already exported messages will be overwritten.`)
+            txtNode = createTextNode(`will stop when it finds messages older than this time period. Already exported messages will be overwritten.`)
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        d(n) {
-            n && ht(i)
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function q1(f) {
-    let i;
+function createStopAtLastMessageExported() {
+    let txtNode;
     return {
         c() {
-            i = It(`will stop when it finds the last message you exported.
-                        This is the default and recommended option.`)
+            txtNode = createTextNode(`will stop when it finds the last message you exported. This is the default and recommended option.`)
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        d(n) {
-            n && ht(i)
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function j1(f) {
-    let i, n, l, s, d, u, a;
+function CreateExportMessagesComponent(props) {
+    let divElement, pElement, spaceNode, pElement2, codeElement, txtNode, spaceNode2;
 
-    function m(g, h) {
-        if (g[1] === g[8].UntilLast) return q1;
-        if (g[1] === g[8].Day || g[1] === g[8].Week || g[1] === g[8].Month) return K1;
-        if (g[1] === g[8].All) return G1
+    function determineMessageComponent(props) {
+        if (props[1] === props[8].UntilLast) return createStopAtLastMessageExported;
+        if (props[1] === props[8].Day || props[1] === props[8].Week || props[1] === props[8].Month) return createStopWhenOlderThanTimeMessage;
+        if (props[1] === props[8].All) return createApplicationStatusComponent
     }
-    let _ = m(f),
-        c = _ && _(f);
+    let messageComponent = determineMessageComponent(props),
+        instance = messageComponent && messageComponent(props);
     return {
         c() {
-            i = ot("div"), n = ot("p"), n.textContent = "Export messages in the choosen time period:", l = Et(), s = ot("p"), d = ot("code"), u = It(f[1]), a = Et(), c && c.c(), dt(d, "class", "capitalize"), dt(i, "class", "space-y-2")
+            divElement = createElement("div");
+            pElement = createElement("p");
+            pElement.textContent = "Export messages in the choosen time period:";
+            spaceNode = createSpaceTextNode();
+            pElement2 = createElement("p");
+            codeElement = createElement("code");
+            txtNode = createTextNode(props[1]);
+            spaceNode2 = createSpaceTextNode();
+            instance && instance.c();
+            setAttribute(codeElement, "class", "capitalize");
+            setAttribute(divElement, "class", "space-y-2")
         },
-        m(g, h) {
-            pt(g, i, h), q(i, n), q(i, l), q(i, s), q(s, d), q(d, u), q(s, a), c && c.m(s, null)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, pElement);
+            appendChild(divElement, spaceNode);
+            appendChild(divElement, pElement2);
+            appendChild(pElement2, codeElement);
+            appendChild(codeElement, txtNode);
+            appendChild(pElement2, spaceNode2);
+            instance && instance.m(pElement2, null)
         },
-        p(g, h) {
-            h & 2 && ae(u, g[1]), _ !== (_ = m(g)) && (c && c.d(1), c = _ && _(g), c && (c.c(), c.m(s, null)))
+        p(newState, dirtyFlags) {
+            dirtyFlags & 2 && updateWholeTextNode(txtNode, newState[1]), messageComponent !== (messageComponent = determineMessageComponent(newState)) && (instance && instance.d(1), instance = messageComponent && messageComponent(newState), instance && (instance.c(), instance.m(pElement2, null)))
         },
-        d(g) {
-            g && ht(i), c && c.d()
+        d(detach) {
+            detach && removeElement(divElement), instance && instance.d()
         }
     }
 }
 
-function Xu(f) {
-    let i, n, l, s = (f[4].message ?? "…") + "",
-        d;
+function CreateMessageSummary(props) {
+    let divElement, txtNode, txtNode2, s = (props[4].message ?? "…") + "",
+        txtNode3;
     return {
         c() {
-            i = ot("div"), n = It(f[2]), l = It(" messages "), d = It(s)
+            divElement = createElement("div");
+            txtNode = createTextNode(props[2]);
+            txtNode2 = createTextNode(" messages ");
+            txtNode3 = createTextNode(s)
         },
-        m(u, a) {
-            pt(u, i, a), q(i, n), q(i, l), q(i, d)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, txtNode);
+            appendChild(divElement, txtNode2);
+            appendChild(divElement, txtNode3)
         },
-        p(u, a) {
-            a & 4 && ae(n, u[2]), a & 16 && s !== (s = (u[4].message ?? "…") + "") && ae(d, s)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 4 && updateWholeTextNode(txtNode, newState[2]), dirtyFlags & 16 && s !== (s = (newState[4].message ?? "…") + "") && updateWholeTextNode(txtNode3, s)
         },
-        d(u) {
-            u && ht(i)
+        d(detach) {
+            detach && removeElement(divElement)
         }
     }
 }
 
-function Y1(f) {
-    let i, n = f[2] !== void 0 && Xu(f);
+function Y1MessageComponent(props) {
+    let emptyTextNode, msgSummary = props[2] !== void 0 && CreateMessageSummary(props);
     return {
         c() {
-            n && n.c(), i = yn()
+            msgSummary && msgSummary.c();
+            emptyTextNode = createEmptyTextNode()
         },
-        m(l, s) {
-            n && n.m(l, s), pt(l, i, s)
+        m(parentElement, anchor) {
+            msgSummary && msgSummary.m(parentElement, anchor);
+            insertBefore(parentElement, emptyTextNode, anchor)
         },
-        p(l, s) {
-            l[2] !== void 0 ? n ? n.p(l, s) : (n = Xu(l), n.c(), n.m(i.parentNode, i)) : n && (n.d(1), n = null)
+        p(newState, dirtyFlags) {
+            newState[2] !== void 0 ? msgSummary ? msgSummary.p(newState, dirtyFlags) : (msgSummary = CreateMessageSummary(newState), msgSummary.c(), msgSummary.m(emptyTextNode.parentNode, emptyTextNode)) : msgSummary && (msgSummary.d(1), msgSummary = null)
         },
-        d(l) {
-            n && n.d(l), l && ht(i)
+        d(detach) {
+            msgSummary && msgSummary.d(detach);
+            detach && removeElement(emptyTextNode)
         }
     }
 }
 
-function Vu(f) {
-    let i, n = f[16] + "",
-        l;
+function createOptionsElement(props) {
+    let optionsElement, optionsValue = props[16] + "",
+        txtNode;
     return {
         c() {
-            i = ot("option"), l = It(n), i.__value = f[16], i.value = i.__value
+            optionsElement = createElement("option");
+            txtNode = createTextNode(optionsValue);
+            optionsElement.__value = props[16];
+            optionsElement.value = optionsElement.__value
         },
-        m(s, d) {
-            pt(s, i, d), q(i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, optionsElement, anchor);
+            appendChild(optionsElement, txtNode)
         },
-        p: ne,
-        d(s) {
-            s && ht(i)
+        p: noOperation,
+        d(detach) {
+            detach && removeElement(optionsElement)
         }
     }
 }
 
-function J1(f) {
-    let i, n, l, s, d, u, a, m = Object.values(ee),
-        _ = [];
-    for (let c = 0; c < m.length; c += 1) _[c] = Vu(ju(f, m, c));
+function createExportFormatSelection(props) {
+    let fieldsetElement, selectElement, spaceNode, btnElement, d, u, a, m = Object.values(eeExportFormat),
+        options = [];
+    for (let index = 0; index < m.length; index += 1) options[index] = createOptionsElement(updateStateWithNewValue(props, m, index));
     return {
         c() {
-            i = ot("fieldset"), n = ot("select");
-            for (let c = 0; c < _.length; c += 1) _[c].c();
-            l = Et(), s = ot("button"), s.textContent = "Download", dt(n, "class", "uppercase"), f[6] === void 0 && cr(() => f[14].call(n)), i.disabled = d = f[0] !== Ct.Idle || f[7] === 0, dt(i, "class", "space-x-1")
+            fieldsetElement = createElement("fieldset");
+            selectElement = createElement("select");
+            for (let index2 = 0; index2 < options.length; index2 += 1) options[index2].c();
+            spaceNode = createSpaceTextNode();
+            btnElement = createElement("button");
+            btnElement.textContent = "Download";
+            setAttribute(selectElement, "class", "uppercase");
+            props[6] === void 0 && addBeforeUpdateCallback(() => props[14].call(selectElement));
+            fieldsetElement.disabled = d = props[0] !== ExportStatus.Idle || props[7] === 0, setAttribute(fieldsetElement, "class", "space-x-1")
         },
-        m(c, g) {
-            pt(c, i, g), q(i, n);
-            for (let h = 0; h < _.length; h += 1) _[h].m(n, null);
-            fr(n, f[6]), q(i, l), q(i, s), u || (a = [le(n, "change", f[14]), le(s, "click", f[11])], u = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, fieldsetElement, anchor);
+            appendChild(fieldsetElement, selectElement);
+            for (let index3 = 0; index3 < options.length; index3 += 1) options[index3].m(selectElement, null);
+            selectOptionByValue(selectElement, props[6]);
+            appendChild(fieldsetElement, spaceNode);
+            appendChild(fieldsetElement, btnElement);
+            u || (a = [addEventListenerWithCleanup(selectElement, "change", props[14]), addEventListenerWithCleanup(btnElement, "click", props[11])], u = !0)
         },
-        p(c, g) {
-            if (g & 0) {
-                m = Object.values(ee);
+        p(newState, dirtyFlags) {
+            if (dirtyFlags & 0) {
+                m = Object.values(eeExportFormat);
                 let h;
                 for (h = 0; h < m.length; h += 1) {
-                    const p = ju(c, m, h);
-                    _[h] ? _[h].p(p, g) : (_[h] = Vu(p), _[h].c(), _[h].m(n, null))
+                    const p = updateStateWithNewValue(newState, m, h);
+                    options[h] ? options[h].p(p, dirtyFlags) : (options[h] = createOptionsElement(p), options[h].c(), options[h].m(selectElement, null))
                 }
-                for (; h < _.length; h += 1) _[h].d(1);
-                _.length = m.length
+                for (; h < options.length; h += 1) options[h].d(1);
+                options.length = m.length
             }
-            g & 64 && fr(n, c[6]), g & 129 && d !== (d = c[0] !== Ct.Idle || c[7] === 0) && (i.disabled = d)
+            dirtyFlags & 64 && selectOptionByValue(selectElement, newState[6]), dirtyFlags & 129 && d !== (d = newState[0] !== ExportStatus.Idle || newState[7] === 0) && (fieldsetElement.disabled = d)
         },
-        d(c) {
-            c && ht(i), Dn(_, c), u = !1, tn(a)
+        d(detach) {
+            detach && removeElement(fieldsetElement);
+            callDestroyMethods(options, detach);
+            u = !1;
+            executeAll(a)
         }
     }
 }
 
-function Qu(f) {
-    let i;
+function createCaiLimit() {
+    let pElement;
     return {
         c() {
-            i = ot("p"), i.innerHTML = `Note that <a href="https://character.ai" target="_blank" rel="noopener noreferrer">Character.ai</a> currently limits the import of example conversations to
+            pElement = createElement("p");
+            pElement.innerHTML = `Note that <a href="https://character.ai" target="_blank" rel="noopener noreferrer">Character.ai</a> currently limits the import of example conversations to
                         a maximum length of 3200 characters. You probably want to
                         go through the export and nail it down to your most valuable
                         conversations.`
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, pElement, anchor)
         },
-        d(n) {
-            n && ht(i)
+        d(detach) {
+            detach && removeElement(pElement)
         }
     }
 }
 
-function X1(f) {
-    let i, n, l, s = f[6] === ee.CHARACTER_AI && Qu();
+function createLocalStorageMsg(f) {
+    let divElement, pElement, spaceNode, s = f[6] === eeExportFormat.CHARACTER_AI && createCaiLimit();
     return {
         c() {
-            i = ot("div"), n = ot("p"), n.innerHTML = `Messages of your previous exports are stored locally on your
+            divElement = createElement("div");
+            pElement = createElement("p");
+            pElement.innerHTML = `Messages of your previous exports are stored locally on your
                     device. Only you can access them. All messages are available
-                    offline. <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank" rel="noopener noreferrer">IndexdeDB</a> is used to store the messages on your side.`, l = Et(), s && s.c(), dt(i, "class", "space-y-2")
+                    offline. <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API" target="_blank" rel="noopener noreferrer">IndexdeDB</a> is used to store the messages on your side.`;
+            spaceNode = createSpaceTextNode();
+            s && s.c();
+            setAttribute(divElement, "class", "space-y-2")
         },
-        m(d, u) {
-            pt(d, i, u), q(i, n), q(i, l), s && s.m(i, null)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, pElement);
+            appendChild(divElement, spaceNode);
+            s && s.m(divElement, null)
         },
-        p(d, u) {
-            d[6] === ee.CHARACTER_AI ? s || (s = Qu(), s.c(), s.m(i, null)) : s && (s.d(1), s = null)
+        p(newState, dirtyFlags) {
+            newState[6] === eeExportFormat.CHARACTER_AI ? s || (s = createCaiLimit(), s.c(), s.m(divElement, null)) : s && (s.d(1), s = null)
         },
-        d(d) {
-            d && ht(i), s && s.d()
+        d(detach) {
+            detach && removeElement(divElement), s && s.d()
         }
     }
 }
 
-function tl(f) {
-    let i, n = f[3].start.toLocaleDateString() + "",
-        l, s, d = f[3].end.toLocaleDateString() + "",
-        u, a, m = f[3].duration + "",
-        _, c;
+function createDateRange(f) {
+    let divElement, n = f[3].start.toLocaleDateString() + "",
+        txtNode, txtNode2, d = f[3].end.toLocaleDateString() + "",
+        txtNode3, txtNode4, m = f[3].duration + "",
+        txtNode5, txtNode6;
     return {
         c() {
-            i = ot("div"), l = It(n), s = It(` -
-                        `), u = It(d), a = It(" ("), _ = It(m), c = It(")")
+            divElement = createElement("div");
+            txtNode = createTextNode(n);
+            txtNode2 = createTextNode(` - `);
+            txtNode3 = createTextNode(d);
+            txtNode4 = createTextNode(" (");
+            txtNode5 = createTextNode(m);
+            txtNode6 = createTextNode(")")
         },
-        m(g, h) {
-            pt(g, i, h), q(i, l), q(i, s), q(i, u), q(i, a), q(i, _), q(i, c)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, txtNode);
+            appendChild(divElement, txtNode2);
+            appendChild(divElement, txtNode3);
+            appendChild(divElement, txtNode4);
+            appendChild(divElement, txtNode5);
+            appendChild(divElement, txtNode6)
         },
-        p(g, h) {
-            h & 8 && n !== (n = g[3].start.toLocaleDateString() + "") && ae(l, n), h & 8 && d !== (d = g[3].end.toLocaleDateString() + "") && ae(u, d), h & 8 && m !== (m = g[3].duration + "") && ae(_, m)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 8 && n !== (n = newState[3].start.toLocaleDateString() + "") && updateWholeTextNode(txtNode, n), dirtyFlags & 8 && d !== (d = newState[3].end.toLocaleDateString() + "") && updateWholeTextNode(txtNode3, d), dirtyFlags & 8 && m !== (m = newState[3].duration + "") && updateWholeTextNode(txtNode5, m)
         },
-        d(g) {
-            g && ht(i)
+        d(detach) {
+            detach && removeElement(divElement)
         }
     }
 }
 
-function V1(f) {
-    let i, n, l, s, d, u = f[3].start && f[3].end && tl(f);
+function DateRangeComponent(props) {
+    let divElement, divElement2, txtNode, txtNode2, spaceNode, hasDateRange = props[3].start && props[3].end && createDateRange(props);
     return {
         c() {
-            i = ot("div"), n = ot("div"), l = It(f[7]), s = It(" messages"), d = Et(), u && u.c(), dt(i, "class", "space-y-2")
+            divElement = createElement("div");
+            divElement2 = createElement("div");
+            txtNode = createTextNode(props[7]);
+            txtNode2 = createTextNode(" messages");
+            spaceNode = createSpaceTextNode();
+            hasDateRange && hasDateRange.c();
+            setAttribute(divElement, "class", "space-y-2")
         },
-        m(a, m) {
-            pt(a, i, m), q(i, n), q(n, l), q(n, s), q(i, d), u && u.m(i, null)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, divElement2);
+            appendChild(divElement2, txtNode);
+            appendChild(divElement2, txtNode2);
+            appendChild(divElement, spaceNode);
+            hasDateRange && hasDateRange.m(divElement, null)
         },
-        p(a, m) {
-            m & 128 && ae(l, a[7]), a[3].start && a[3].end ? u ? u.p(a, m) : (u = tl(a), u.c(), u.m(i, null)) : u && (u.d(1), u = null)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 128 && updateWholeTextNode(txtNode, newState[7]), newState[3].start && newState[3].end ? hasDateRange ? hasDateRange.p(newState, dirtyFlags) : (hasDateRange = createDateRange(newState), hasDateRange.c(), hasDateRange.m(divElement, null)) : hasDateRange && (hasDateRange.d(1), hasDateRange = null)
         },
-        d(a) {
-            a && ht(i), u && u.d()
+        d(detach) {
+            detach && removeElement(divElement);
+            hasDateRange && hasDateRange.d()
         }
     }
 }
 
-function Q1(f) {
-    let i, n, l, s, d, u, a;
-    return n = new Al({
+function ChatExportComponent(props) {
+    let divElement, errComp, spaceNode, newChatExportComponent, spaceNode2, localArchiveComponent, a;
+    return errComp = new AlErrorComponent({
         props: {
-            error: f[5]
+            error: props[5]
         }
-    }), s = new dr({
+    }), newChatExportComponent = new ExportComponent({
         props: {
             title: "New Chat Export",
             $$slots: {
-                body: [Y1],
-                caption: [j1],
-                head: [Z1]
+                body: [Y1MessageComponent],
+                caption: [CreateExportMessagesComponent],
+                head: [createExportStatusComponent]
             },
             $$scope: {
-                ctx: f
+                ctx: props
             }
         }
-    }), u = new dr({
+    }), localArchiveComponent = new ExportComponent({
         props: {
             title: "Local archive",
             $$slots: {
-                body: [V1],
-                caption: [X1],
-                head: [J1]
+                body: [DateRangeComponent],
+                caption: [createLocalStorageMsg],
+                head: [createExportFormatSelection]
             },
             $$scope: {
-                ctx: f
+                ctx: props
             }
         }
     }), {
         c() {
-            i = ot("div"), Ee(n.$$.fragment), l = Et(), Ee(s.$$.fragment), d = Et(), Ee(u.$$.fragment), dt(i, "class", "space-y-8")
+            divElement = createElement("div");
+            createFragment(errComp.$$.fragment);
+            spaceNode = createSpaceTextNode();
+            createFragment(newChatExportComponent.$$.fragment);
+            spaceNode2 = createSpaceTextNode();
+            createFragment(localArchiveComponent.$$.fragment);
+            setAttribute(divElement, "class", "space-y-8")
         },
-        m(m, _) {
-            pt(m, i, _), ye(n, i, null), q(i, l), ye(s, i, null), q(i, d), ye(u, i, null), a = !0
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            mountComponent(errComp, divElement, null);
+            appendChild(divElement, spaceNode);
+            mountComponent(newChatExportComponent, divElement, null);
+            appendChild(divElement, spaceNode2);
+            mountComponent(localArchiveComponent, divElement, null);
+            a = !0
         },
-        p(m, [_]) {
+        p(newState, [dirtyFlags]) {
             const c = {};
-            _ & 32 && (c.error = m[5]), n.$set(c);
+            dirtyFlags & 32 && (c.error = newState[5]), errComp.$set(c);
             const g = {};
-            _ & 4194327 && (g.$$scope = {
-                dirty: _,
-                ctx: m
-            }), s.$set(g);
+            dirtyFlags & 4194327 && (g.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), newChatExportComponent.$set(g);
             const h = {};
-            _ & 4194505 && (h.$$scope = {
-                dirty: _,
-                ctx: m
-            }), u.$set(h)
+            dirtyFlags & 4194505 && (h.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), localArchiveComponent.$set(h)
         },
-        i(m) {
-            a || (Ht(n.$$.fragment, m), Ht(s.$$.fragment, m), Ht(u.$$.fragment, m), a = !0)
+        i(isIntro) {
+            a || (invokeInitFunction(errComp.$$.fragment, isIntro), invokeInitFunction(newChatExportComponent.$$.fragment, isIntro), invokeInitFunction(localArchiveComponent.$$.fragment, isIntro), a = !0)
         },
-        o(m) {
-            qt(n.$$.fragment, m), qt(s.$$.fragment, m), qt(u.$$.fragment, m), a = !1
+        o(isOutro) {
+            handlePromise(errComp.$$.fragment, isOutro), handlePromise(newChatExportComponent.$$.fragment, isOutro), handlePromise(localArchiveComponent.$$.fragment, isOutro), a = !1
         },
-        d(m) {
-            m && ht(i), be(n), be(s), be(u)
+        d(detach) {
+            detach && removeElement(divElement);
+            destroyComponent(errComp);
+            destroyComponent(newChatExportComponent);
+            destroyComponent(localArchiveComponent)
         }
     }
 }
 
-function tg(f, i, n) {
-    var l = (T => (T.UntilLast = "untilLast", T.Day = "day", T.Week = "week", T.Month = "month", T.All = "all", T))(l || {});
-    let s = Ct.Idle,
-        d = null,
-        u = "untilLast",
-        a, m = ee.TXT,
-        _, c = 0,
-        g, h = {},
-        p = {
+
+function exportChat(state, i, updateState) {
+    var timeRangeOptions = (timeRange => (timeRange.UntilLast = "untilLast", timeRange.Day = "day", timeRange.Week = "week", timeRange.Month = "month", timeRange.All = "all", timeRange))(timeRangeOptions || {});
+    let exportStatus = ExportStatus.Idle,
+        err = null,
+        selectedRange = "untilLast",
+        exportFormat, mExportFormat = eeExportFormat.TXT,
+        messagesProcessed, msgCount = 0,
+        processedMessagesCount, h = {},
+        perfMetrics = {
             start: 0,
             end: 0,
             message: ""
         };
-    (async () => (countMessages().then(L => {
-        n(7, c = L)
-    }), new URLSearchParams(window.location.search).get("ref") === "menu" && x()))();
-    async function x() {
-        n(4, p.start = performance.now(), p), n(0, s = Ct.Working), n(2, g = 0);
+    (async () => (countMessages().then(count => {
+        updateState(7, msgCount = count)
+    }), new URLSearchParams(window.location.search).get("ref") === "menu" && startExport()))();
+    async function startExport() {
+        updateState(4, perfMetrics.start = performance.now(), perfMetrics);
+        updateState(0, exportStatus = ExportStatus.Working);
+        updateState(2, processedMessagesCount = 0);
         const {
-            error: T,
-            data: L
-        } = await hr();
-        if (n(5, d = T), _ = L, T) {
-            n(0, s = Ct.Idle);
+            error: authError,
+            data: authData
+        } = await extractAuthData();
+        if (updateState(5, err = authError), messagesProcessed = authData, authError) {
+            updateState(0, exportStatus = ExportStatus.Idle);
             return
         }
-        const B = await getLastMessageId(),
-            G = new WebSocket("wss://ws.replika.com/v17");
-        let W = {
+        const lastMsgID = await getLastMessageId(),
+            exportWebSocket = new WebSocket("wss://ws.replika.com/v17");
+        let requestPayload = {
             event_name: "history",
-            token: Oi(),
+            token: generateUUID(),
             auth: {
-                user_id: _.userId,
-                auth_token: _.authToken,
-                device_id: _.deviceId
+                user_id: messagesProcessed.userId,
+                auth_token: messagesProcessed.authToken,
+                device_id: messagesProcessed.deviceId
             },
             payload: {
-                chat_id: _.chatId,
+                chat_id: messagesProcessed.chatId,
                 limit: 1e3,
                 last_message_id: void 0
             }
         };
-        G.addEventListener("open", () => {
-            G.send(JSON.stringify(W)), G.addEventListener("message", async ({
-                data: V
+        exportWebSocket.addEventListener("open", () => {
+            exportWebSocket.send(JSON.stringify(requestPayload)), exportWebSocket.addEventListener("message", async ({
+                data: Vdata
             }) => {
                 try {
-                    let Z = function() {
-                        return !a || !st.payload.to ? !1 : new Date(st.payload.to).getTime() <= a.getTime()
+                    let reachedCutoff = function() {
+                        return !exportFormat || !stresponse.payload.to ? !1 : new Date(stresponse.payload.to).getTime() <= exportFormat.getTime()
                     };
-                    n(4, p.end = performance.now(), p);
-                    const st = JSON.parse(V.toString());
-                    if (st.event_name !== "history") return;
-                    if (!st.payload || !st.payload.messages) throw {
+                    updateState(4, perfMetrics.end = performance.now(), perfMetrics);
+                    const stresponse = JSON.parse(Vdata.toString());
+                    if (stresponse.event_name !== "history") return;
+                    if (!stresponse.payload || !stresponse.payload.messages) throw {
                         message: "Unexpected response from Replika",
-                        response: st
+                        response: stresponse
                     };
-                    let vt = st.payload.messages;
-                    if (vt.length === 0) {
-                        G.close(), n(0, s = Ct.Idle);
+                    let vtmessages = stresponse.payload.messages;
+                    if (vtmessages.length === 0) {
+                        exportWebSocket.close(), updateState(0, exportStatus = ExportStatus.Idle);
                         return
                     }
-                    let D = !1;
-                    if (u === "untilLast") {
-                        const b = vt.findIndex(tt => tt.id === B);
-                        D = b > -1, D && (vt = vt.slice(b + 1))
+                    let isLastMessageFound = !1;
+                    if (selectedRange === "untilLast") {
+                        const lastMsgIndex = vtmessages.findIndex(tt => tt.id === lastMsgID);
+                        isLastMessageFound = lastMsgIndex > -1, isLastMessageFound && (vtmessages = vtmessages.slice(lastMsgIndex + 1))
                     }
-                    const Y = database.transaction("messages", "readwrite").objectStore("messages");
-                    vt.forEach(b => {
-                        Y.add(b)
-                    }), n(2, g += vt.length), s === Ct.Stopping || D || Z() ? (G.close(), n(0, s = Ct.Idle)) : (W.payload.last_message_id = vt[0].id, G.send(JSON.stringify(W)))
-                } catch (Z) {
-                    console.warn(Z), n(5, d = Z), G.close(), n(0, s = Ct.Idle)
+                    const messageStore = database.transaction("messages", "readwrite").objectStore("messages");
+                    vtmessages.forEach(bMSG => {
+                        messageStore.add(bMSG)
+                    }), updateState(2, processedMessagesCount += vtmessages.length), exportStatus === ExportStatus.Stopping || isLastMessageFound || reachedCutoff() ? (exportWebSocket.close(), updateState(0, exportStatus = ExportStatus.Idle)) : (requestPayload.payload.last_message_id = vtmessages[0].id, exportWebSocket.send(JSON.stringify(requestPayload)))
+                } catch (error) {
+                    console.warn(error);
+                    updateState(5, error = error);
+                    exportWebSocket.close();
+                    updateState(0, exportStatus = ExportStatus.Idle)
                 }
             })
         })
     }
-    async function y() {
-        n(0, s = Ct.Stopping)
+    async function stopExport() {
+        updateState(0, exportStatus = ExportStatus.Stopping)
     }
-    async function A() {
-        if (n(0, s = Ct.Working), !_) {
+    async function finalizeExport() {
+        if (updateState(0, exportStatus = ExportStatus.Working), !messagesProcessed) {
             const {
                 error: T,
                 data: L
-            } = await hr();
-            if (n(5, d = T), _ = L, T) {
-                n(0, s = Ct.Idle);
+            } = await extractAuthData();
+            if (updateState(5, err = T), messagesProcessed = L, T) {
+                updateState(0, exportStatus = ExportStatus.Idle);
                 return
             }
         }
-        await z1(m, _), n(0, s = Ct.Idle)
+        await exportMessages(mExportFormat, messagesProcessed), updateState(0, exportStatus = ExportStatus.Idle)
     }
 
-    function S() {
-        u = Vs(this), n(1, u), n(8, l)
+    function updateSelectedRange() {
+        selectedRange = getCheckedValue(this), updateState(1, selectedRange), updateState(8, timeRangeOptions)
     }
 
-    function C() {
-        m = Vs(this), n(6, m)
+    function updateExportFormat() {
+        mExportFormat = getCheckedValue(this), updateState(6, mExportFormat)
     }
-    return f.$$.update = () => {
-        f.$$.dirty & 4098 && (u === "all" ? n(12, a = void 0) : u === "month" ? (n(12, a = new Date), a.setMonth(a.getMonth() - 1)) : u === "week" ? (n(12, a = new Date), a.setDate(a.getDate() - 7)) : u === "day" && (n(12, a = new Date), a.setDate(a.getDate() - 1))), f.$$.dirty & 12 && (async T => {
-            n(7, c = await countMessages());
-            n(3, h.start = new Date(L.meta.timestamp), h), n(3, h.end = new Date(B.meta.timestamp), h);
+    return state.$$.update = () => {
+        state.$$.dirty & 4098 && (selectedRange === "all" ? updateState(12, exportFormat = void 0) : selectedRange === "month" ? (updateState(12, exportFormat = new Date), exportFormat.setMonth(exportFormat.getMonth() - 1)) : selectedRange === "week" ? (updateState(12, exportFormat = new Date), exportFormat.setDate(exportFormat.getDate() - 7)) : selectedRange === "day" && (updateState(12, exportFormat = new Date), exportFormat.setDate(exportFormat.getDate() - 1))), state.$$.dirty & 12 && (async T => {
+            updateState(7, msgCount = await countMessages());
+            updateState(3, h.start = new Date(L.meta.timestamp), h), updateState(3, h.end = new Date(B.meta.timestamp), h);
             const G = h.end.getTime() - h.start.getTime();
-            n(3, h.duration = new Intl.RelativeTimeFormat("en", {
+            updateState(3, h.duration = new Intl.RelativeTimeFormat("en", {
                 numeric: "auto"
             }).format(Math.round(G / 1e3 / 60 / 60 / 24 / 30), "months"), h)
-        })(), f.$$.dirty & 16 && p.start && p.end && n(4, p.message = new Intl.RelativeTimeFormat("en", {
+        })(), state.$$.dirty & 16 && perfMetrics.start && perfMetrics.end && updateState(4, perfMetrics.message = new Intl.RelativeTimeFormat("en", {
             numeric: "auto"
-        }).format(Math.round((p.end - p.start) / 1e3), "seconds"), p), f.$$.dirty & 1 && (s === Ct.Working ? document.body.classList.add("cursor-wait") : document.body.classList.remove("cursor-wait"))
-    }, [s, u, g, h, p, d, m, c, l, x, y, A, a, S, C]
+        }).format(Math.round((perfMetrics.end - perfMetrics.start) / 1e3), "seconds"), perfMetrics), state.$$.dirty & 1 && (exportStatus === ExportStatus.Working ? document.body.classList.add("cursor-wait") : document.body.classList.remove("cursor-wait"))
+    }, [exportStatus, selectedRange, processedMessagesCount, h, perfMetrics, err, mExportFormat, msgCount, timeRangeOptions, startExport, stopExport, finalizeExport, exportFormat, updateSelectedRange, updateExportFormat]
 }
-class eg extends rn {
-    constructor(i) {
-        super(), nn(this, i, tg, Q1, en, {})
+
+class eg extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, exportChat, ChatExportComponent, isEqual, {})
     }
 }
 
-function Si(f) {
-    throw new Error('Could not dynamically require "' + f + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.')
-}
-
-function sg(f) {
-    let i;
+function showNoAudioMessage() {
+    let txtNode;
     return {
         c() {
-            i = It(`no audio message found, make sure to export text messages first using the
-    chat export`)
+            txtNode = createTextNode(`no audio message found, make sure to export text messages first using the chat export`)
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        p: ne,
-        i: ne,
-        o: ne,
-        d(n) {
-            n && ht(i)
+        p: noOperation,
+        i: noOperation,
+        o: noOperation,
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function og(f) {
-    let i, n;
-    return i = new dr({
+function createVoiceExportComponent(component) {
+    let exportComponentInstance, isMounted;
+    return exportComponentInstance = new ExportComponent({
         props: {
             title: "New Voice Message Export",
             $$slots: {
-                body: [lg],
-                caption: [ug],
-                head: [ag]
+                body: [createChunkSizeComponent],
+                caption: [updateVoiceMsgSummary],
+                head: [exportHeadSlot]
             },
             $$scope: {
-                ctx: f
+                ctx: component
             }
         }
     }), {
         c() {
-            Ee(i.$$.fragment)
+            createFragment(exportComponentInstance.$$.fragment)
         },
-        m(l, s) {
-            ye(i, l, s), n = !0
+        m(parentElement, anchor) {
+            mountComponent(exportComponentInstance, parentElement, anchor);
+            isMounted = !0
         },
-        p(l, s) {
-            const d = {};
-            s & 159 && (d.$$scope = {
-                dirty: s,
-                ctx: l
-            }), i.$set(d)
+        p(newState, dirtyFlags) {
+            const updatedProps = {};
+            dirtyFlags & 159 && (updatedProps.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), exportComponentInstance.$set(updatedProps)
         },
-        i(l) {
-            n || (Ht(i.$$.fragment, l), n = !0)
+        i(isIntro) {
+            isMounted || (invokeInitFunction(exportComponentInstance.$$.fragment, isIntro), isMounted = !0)
         },
-        o(l) {
-            qt(i.$$.fragment, l), n = !1
+        o(isOutro) {
+            handlePromise(exportComponentInstance.$$.fragment, isOutro), isMounted = !1
         },
-        d(l) {
-            be(i, l)
+        d(detach) {
+            destroyComponent(exportComponentInstance, detach)
         }
     }
 }
 
-function ag(f) {
-    let i, n, l, s, d;
+function exportHeadSlot(componet) {
+    let btnElement, txtNode, isButtonDisabled, clickHandlerCleanup, d;
     return {
         c() {
-            i = ot("button"), n = It("Start Export"), i.disabled = l = f[1] !== Ct.Idle
+            btnElement = createElement("button");
+            txtNode = createTextNode("Start Export");
+            btnElement.disabled = isButtonDisabled = componet[1] !== ExportStatus.Idle
         },
-        m(u, a) {
-            pt(u, i, a), q(i, n), s || (d = le(i, "click", f[5]), s = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, btnElement, anchor);
+            appendChild(btnElement, txtNode);
+            clickHandlerCleanup || (d = addEventListenerWithCleanup(btnElement, "click", componet[5]), clickHandlerCleanup = !0)
         },
-        p(u, a) {
-            a & 2 && l !== (l = u[1] !== Ct.Idle) && (i.disabled = l)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 2 && isButtonDisabled !== (isButtonDisabled = newState[1] !== ExportStatus.Idle) && (btnElement.disabled = isButtonDisabled)
         },
-        d(u) {
-            u && ht(i), s = !1, d()
+        d(detach) {
+            detach && removeElement(btnElement);
+            clickHandlerCleanup = !1;
+            d()
         }
     }
 }
 
-function ug(f) {
-    let i, n = f[0].length + "",
-        l, s, d, u, a = Math.round(f[4] / 60) + "",
-        m, _;
+function updateVoiceMsgSummary(component) {
+    let pElement, voiceMessageCount = component[0].length + "",
+        txtNode, txtNode2, spaceNode, pElement2, totalMinutes = Math.round(component[4] / 60) + "",
+        txtNode3, txtNode4;
     return {
         c() {
-            i = ot("p"), l = It(n), s = It(" voice messages"), d = Et(), u = ot("p"), m = It(a), _ = It(" minutes of audio")
+            pElement = createElement("p");
+            txtNode = createTextNode(voiceMessageCount);
+            txtNode2 = createTextNode(" voice messages");
+            spaceNode = createSpaceTextNode();
+            pElement2 = createElement("p");
+            txtNode3 = createTextNode(totalMinutes);
+            txtNode4 = createTextNode(" minutes of audio")
         },
-        m(c, g) {
-            pt(c, i, g), q(i, l), q(i, s), pt(c, d, g), pt(c, u, g), q(u, m), q(u, _)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, pElement, anchor);
+            appendChild(pElement, txtNode);
+            appendChild(pElement, txtNode2);
+            insertBefore(parentElement, spaceNode, anchor);
+            insertBefore(parentElement, pElement2, anchor);
+            appendChild(pElement2, txtNode3);
+            appendChild(pElement2, txtNode4)
         },
-        p(c, g) {
-            g & 1 && n !== (n = c[0].length + "") && ae(l, n), g & 16 && a !== (a = Math.round(c[4] / 60) + "") && ae(m, a)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 1 && voiceMessageCount !== (voiceMessageCount = newState[0].length + "") && updateWholeTextNode(txtNode, voiceMessageCount), dirtyFlags & 16 && totalMinutes !== (totalMinutes = Math.round(newState[4] / 60) + "") && updateWholeTextNode(txtNode3, totalMinutes)
         },
-        d(c) {
-            c && ht(i), c && ht(d), c && ht(u)
+        d(detach) {
+            detach && removeElement(pElement);
+            detach && removeElement(spaceNode);
+            detach && removeElement(pElement2)
         }
     }
 }
 
-function lg(f) {
-    let i, n, l, s, d, u, a, m, _;
+function createChunkSizeComponent(component) {
+    let labelElement, inputElement, spaceNode, divElement, spaceNode2, preElement, txtNode, inputCleanupHandler, _;
     return {
         c() {
-            i = ot("label"), n = ot("input"), l = Et(), s = ot("div"), s.textContent = `chunk size - how many voice messages to download at the same
-                    time and zip into one archive`, d = Et(), u = ot("pre"), a = It(f[2]), dt(n, "type", "number"), dt(n, "min", "1"), dt(s, "class", "text-xs mt-1"), dt(i, "class", "block mb4"), dt(u, "class", "overflow-x-auto")
+            labelElement = createElement("label");
+            inputElement = createElement("input");
+            spaceNode = createSpaceTextNode();
+            divElement = createElement("div");
+            divElement.textContent = `chunk size - how many voice messages to download at the same time and zip into one archive`;
+            spaceNode2 = createSpaceTextNode();
+            preElement = createElement("pre");
+            txtNode = createTextNode(component[2]);
+            setAttribute(inputElement, "type", "number");
+            setAttribute(inputElement, "min", "1");
+            setAttribute(divElement, "class", "text-xs mt-1");
+            setAttribute(labelElement, "class", "block mb4");
+            setAttribute(preElement, "class", "overflow-x-auto")
         },
-        m(c, g) {
-            pt(c, i, g), q(i, n), Ln(n, f[3]), q(i, l), q(i, s), pt(c, d, g), pt(c, u, g), q(u, a), m || (_ = le(n, "input", f[6]), m = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, labelElement, anchor);
+            appendChild(labelElement, inputElement);
+            setInputValue(inputElement, component[3]);
+            appendChild(labelElement, spaceNode);
+            appendChild(labelElement, divElement);
+            insertBefore(parentElement, spaceNode2, anchor);
+            insertBefore(parentElement, preElement, anchor);
+            appendChild(preElement, txtNode);
+            inputCleanupHandler || (_ = addEventListenerWithCleanup(inputElement, "input", component[6]), inputCleanupHandler = !0)
         },
-        p(c, g) {
-            g & 8 && lr(n.value) !== c[3] && Ln(n, c[3]), g & 4 && ae(a, c[2])
+        p(newState, dirtyFlags) {
+            dirtyFlags & 8 && parseInteger(inputElement.value) !== newState[3] && setInputValue(inputElement, newState[3]), dirtyFlags & 4 && updateWholeTextNode(txtNode, newState[2])
         },
-        d(c) {
-            c && ht(i), c && ht(d), c && ht(u), m = !1, _()
+        d(detach) {
+            detach && removeElement(labelElement);
+            detach && removeElement(spaceNode2);
+            detach && removeElement(preElement);
+            inputCleanupHandler = !1;
+            _()
         }
     }
 }
 
-function fg(f) {
-    let i, n, l, s;
-    const d = [og, sg],
-        u = [];
+function renderVoiceMessageExportComponent(component) {
+    let currComponent, selectedComponent, txtNode, isMounted;
+    const components = [createVoiceExportComponent, showNoAudioMessage],
+        instantiatedComponents = [];
 
-    function a(m, _) {
-        return m[0].length > 0 ? 0 : 1
+    function selectComponentToRender(state, _) {
+        return state[0].length > 0 ? 0 : 1
     }
-    return i = a(f), n = u[i] = d[i](f), {
+    return currComponent = selectComponentToRender(component), selectedComponent = instantiatedComponents[currComponent] = components[currComponent](component), {
         c() {
-            n.c(), l = yn()
+            selectedComponent.c();
+            txtNode = createEmptyTextNode()
         },
-        m(m, _) {
-            u[i].m(m, _), pt(m, l, _), s = !0
+        m(parentElement, anchor) {
+            instantiatedComponents[currComponent].m(parentElement, anchor);
+            insertBefore(parentElement, txtNode, anchor);
+            isMounted = !0
         },
-        p(m, [_]) {
-            let c = i;
-            i = a(m), i === c ? u[i].p(m, _) : (pr(), qt(u[c], 1, 1, () => {
-                u[c] = null
-            }), _r(), n = u[i], n ? n.p(m, _) : (n = u[i] = d[i](m), n.c()), Ht(n, 1), n.m(l.parentNode, l))
+        p(newState, [dirtyFlags]) {
+            let previousComponent = currComponent;
+            currComponent = selectComponentToRender(newState);
+            currComponent === previousComponent ? instantiatedComponents[currComponent].p(newState, dirtyFlags) : (startPromiseContext(), handlePromise(instantiatedComponents[previousComponent], 1, 1, () => {
+                instantiatedComponents[previousComponent] = null
+            }), endPromiseContext(), selectedComponent = instantiatedComponents[currComponent], selectedComponent ? selectedComponent.p(newState, dirtyFlags) : (selectedComponent = instantiatedComponents[currComponent] = components[currComponent](newState), selectedComponent.c()), invokeInitFunction(selectedComponent, 1), selectedComponent.m(txtNode.parentNode, txtNode))
         },
-        i(m) {
-            s || (Ht(n), s = !0)
+        i() {
+            isMounted || (invokeInitFunction(selectedComponent), isMounted = !0)
         },
-        o(m) {
-            qt(n), s = !1
+        o() {
+            handlePromise(selectedComponent), isMounted = !1
         },
-        d(m) {
-            u[i].d(m), m && ht(l)
+        d(detach) {
+            instantiatedComponents[currComponent].d(detach);
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function cg(f, i, n) {
-    let l = Ct.Idle,
-        s = "",
-        d = 100,
-        u = [],
-        a = 0;
-    yl(async () => {
-        const c = await getAllMessages();
-        n(0, u = c.filter(g => g.content.type === "voice_message"))
+function processVoiceMessages(componentInstance, i, notifyUpdate) {
+    let exportStatus = ExportStatus.Idle,
+        errMsg = "",
+        chunkSize = 100,
+        voiceMessage = [],
+        totalDuration = 0;
+    addOnMountHook(async () => {
+        const allMessages = await getAllMessages();
+        notifyUpdate(0, voiceMessage = allMessages.filter(g => g.content.type === "voice_message"))
     });
-    async function m() {
-        n(1, l = Ct.Working);
+    async function exportVoiceMessages() {
+        notifyUpdate(1, exportStatus = ExportStatus.Working);
         const {
-            data: c,
-            error: g
-        } = await hr();
-        if (g) {
-            n(2, s = JSON.stringify(g, null, 4)), n(1, l = Ct.Idle);
+            data: authData,
+            error: authError
+        } = await extractAuthData();
+        if (authError) {
+            notifyUpdate(2, errMsg = JSON.stringify(authError, null, 4)), notifyUpdate(1, exportStatus = ExportStatus.Idle);
             return
         }
-        const h = LodashE1.chunk(u, d);
-        for (const p of h) {
-            const x = new LodashE2;
-            await Promise.all(p.map(async (A, S) => {
-                const C = A.content.voice_message_url,
-                    T = {
-                        Customer: c.userName,
-                        Robot: c.botName
-                    } [A.meta.nature],
-                    L = [S, A.meta.timestamp, T, C],
-                    B = A.meta.timestamp.replaceAll(":", "-").replaceAll(".", "-");
-                try {
-                    let G;
-                    A.meta.nature === "Robot" ? G = await fetch(C) : A.meta.nature === "Customer" && (G = await fetch(`https://my.replika.ai/api/mobile/1.5/voice_messages?voice_message_url=${C}`, {
-                        method: "GET",
-                        headers: zr(c)
-                    })), L.push(G.status);
-                    const W = await G.blob();
-                    x.file(`${B}_${T}_${A.id}.mp3`.toLowerCase(), W)
-                } catch (G) {
-                    console.warn(G, A), L.push(G)
-                }
-                n(2, s = `${L.join(" - ")}
-${s}`)
+        const messageChunks = LodashE1.chunk(voiceMessage, chunkSize);
+        for (const chunk of messageChunks) {
+            const zipFile = new LodashE2;
+            await Promise.all(chunk.map(async (AMessage, S) => {
+                const voiceMessageUrl = AMessage.content.voice_message_url,
+                    messageType = {
+                        Customer: authData.userName,
+                        Robot: authData.botName
+                    } [AMessage.meta.nature],
+                    messageDetails = [S, AMessage.meta.timestamp, messageType, voiceMessageUrl],
+                    sanitizedTimestamp = AMessage.meta.timestamp.replaceAll(":", "-").replaceAll(".", "-");
+                    try {
+                        let response;
+                    
+                        if (AMessage.meta.nature === "Robot") {
+                            response = await fetch(voiceMessageUrl);
+                        } else if (AMessage.meta.nature === "Customer") {
+                            response = await fetch(`https://my.replika.ai/api/mobile/1.5/voice_messages?voice_message_url=${voiceMessageUrl}`, {
+                                method: "GET",
+                                headers: createRequestHeaders(authData)
+                            });
+                        }
+                    
+                        messageDetails.push(response.status);
+                        const audioBlob = await response.blob();
+                        zipFile.file(`${sanitizedTimestamp}_${messageType}_${AMessage.id}.mp3`.toLowerCase(), audioBlob);
+                    } catch (error) {
+                        console.warn(error, AMessage);
+                        messageDetails.push(error);
+                    }                    
+                notifyUpdate(2, errMsg = `${messageDetails.join(" - ")}${errMsg}`)
             }));
-            const y = await x.generateAsync({
+            const zipBlob = await zipFile.generateAsync({
                 type: "blob"
             });
-            LodashE3.saveAs(y, `replika-export-voice-${Oi()}.zip`), n(1, l = Ct.Idle)
+            LodashE3.saveAs(zipBlob, `replika-export-voice-${generateUUID()}.zip`), notifyUpdate(1, exportStatus = ExportStatus.Idle)
         }
     }
 
-    function _() {
-        d = lr(this.value), n(3, d)
+    function updateChunkSize() {
+        chunkSize = parseInteger(this.value), notifyUpdate(3, chunkSize)
     }
-    return f.$$.update = () => {
-        f.$$.dirty & 17 && u.length > 0 && (n(4, a = 0), u.forEach(c => {
-            n(4, a += c.content.duration)
+    return componentInstance.$$.update = () => {
+        componentInstance.$$.dirty & 17 && voiceMessage.length > 0 && (notifyUpdate(4, totalDuration = 0), voiceMessage.forEach(c => {
+            notifyUpdate(4, totalDuration += c.content.duration)
         }))
-    }, [u, l, s, d, a, m, _]
+    }, [voiceMessage, exportStatus, errMsg, chunkSize, totalDuration, exportVoiceMessages, updateChunkSize]
 }
-class hg extends rn {
-    constructor(i) {
-        super(), nn(this, i, cg, fg, en, {})
+class VoiceMessageExportComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, processVoiceMessages, renderVoiceMessageExportComponent, isEqual, {})
     }
 }
-class dg {
-    constructor(i = {
+class DiaryService {
+    constructor(props = {
         "x-auth-token": "",
         "x-user-id": "",
         "x-device-id": "",
         "x-timestamp-hash": ""
     }) {
-        Fu(this, "headers", {});
-        this.headers = i
+        defineOrSetProperty(this, "headers", {});
+        this.headers = props
     }
     async getDiaryEntries(i, n) {
         return await (await fetch(`https://my.replika.com/api/mobile/1.4/saved_chat_items/previews?t=diary&offset=${i}&limit=${n}`, {
@@ -1727,61 +1916,61 @@ class dg {
         })).json()
     }
     async getAllDiaryEntries() {
-        let i = 0,
-            n = 100,
-            l = [];
+        let offset = 0,
+            limit = 100,
+            allEntries = [];
         for (;;) {
-            const s = await this.getDiaryEntries(i, n);
-            if (s.length === 0) break;
-            l = l.concat(s), i += n
+            const entries = await this.getDiaryEntries(offset, limit);
+            if (entries.length === 0) break;
+            allEntries = allEntries.concat(entries), offset += limit
         }
-        return l
+        return allEntries
     }
-    async getDiaryEntriesDetails(i) {
+    async getDiaryEntriesDetails(entries) {
         return await (await fetch("https://my.replika.com/api/mobile/1.4/saved_chat_items/actions/get_by_ids", {
             headers: this.headers,
             method: "POST",
             body: JSON.stringify({
-                ids: i.map(s => s.id)
+                ids: entries.map(entry => entry.id)
             })
         })).json()
     }
     async export () {
-        const i = await this.getAllDiaryEntries();
-        return await this.getDiaryEntriesDetails(i)
+        const allEntries = await this.getAllDiaryEntries();
+        return await this.getDiaryEntriesDetails(allEntries)
     }
 }
-async function pg(f, i) {
-    const n = Ri("diary", i);
+async function exportDiaryEntries(diaryEntries, exportFormat) {
+    const fileName = generateFileName("diary", exportFormat);
 
-    function l(s) {
-        return s.filter(d => d.type === "text").map(d => d.text).join(`
+    function extractTextContent(entries) {
+        return entries.filter(d => d.type === "text").map(d => d.text).join(`
 `)
     }
-    switch (i) {
-        case ee.TXT: {
-            const s = f.map(d => [new Date(d.timestamp).toLocaleDateString(), d.name, l(d.entries)].join(`
+    switch (exportFormat) {
+        case eeExportFormat.TXT: {
+            const content = diaryEntries.map(d => [new Date(d.timestamp).toLocaleDateString(), d.name, extractTextContent(d.entries)].join(`
 
 `)).join(`
 
 ${"-".repeat(80)}
 
 `);
-            Me(s, "text/plain", n);
+            downloadContent(content, "text/plain", fileName);
             break
         }
-        case ee.CSV: {
-            const s = ao(f.map(d => ({
-                date: new Date(d.timestamp).toLocaleDateString(),
-                name: d.name,
-                content: l(d.entries)
+        case eeExportFormat.CSV: {
+            const csvContent = convertToCSV(diaryEntries.map(entry => ({
+                date: new Date(entry.timestamp).toLocaleDateString(),
+                name: entry.name,
+                content: extractTextContent(entry.entries)
             })));
-            Me(s, "text/csv", n);
+            downloadContent(csvContent, "text/csv", fileName);
             break
         }
-        case ee.JSON: {
-            const s = JSON.stringify(f, null, 2);
-            Me(s, "application/json", n);
+        case eeExportFormat.JSON: {
+            const jsonContent = JSON.stringify(diaryEntries, null, 2);
+            downloadContent(jsonContent, "application/json", fileName);
             break
         }
         default:
@@ -1789,200 +1978,248 @@ ${"-".repeat(80)}
     }
 }
 
-function el(f, i, n) {
-    const l = f.slice();
-    return l[7] = i[n], l
+function updateDiaryEntryArray(diaryEntries, updatedEntry, entryIndex) {
+    const newEntriesArray = diaryEntries.slice();
+    return newEntriesArray[7] = updatedEntry[entryIndex], newEntriesArray
 }
 
-function _g(f) {
-    let i, n, l, s, d, u;
+function createExportButtonComponent(state) {
+    let divElement, btnElement, txtNode, s, cleanupFn, eventListenerCleanup;
     return {
         c() {
-            i = ot("div"), n = ot("button"), l = It("Export"), n.disabled = s = f[2] !== Ct.Idle, dt(i, "class", "space-x-2")
+            divElement = createElement("div");
+            btnElement = createElement("button");
+            txtNode = createTextNode("Export");
+            btnElement.disabled = s = state[2] !== ExportStatus.Idle;
+            setAttribute(divElement, "class", "space-x-2")
         },
-        m(a, m) {
-            pt(a, i, m), q(i, n), q(n, l), d || (u = le(n, "click", function() {
-                Ti(f[4]) && f[4].apply(this, arguments)
-            }), d = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, btnElement);
+            appendChild(btnElement, txtNode);
+            cleanupFn || (eventListenerCleanup = addEventListenerWithCleanup(btnElement, "click", function() {
+                isFunction(state[4]) && state[4].apply(this, arguments)
+            }), cleanupFn = !0)
         },
-        p(a, m) {
-            f = a, m & 4 && s !== (s = f[2] !== Ct.Idle) && (n.disabled = s)
+        p(newState, dirtyFlags) {
+            state = newState, dirtyFlags & 4 && s !== (s = state[2] !== ExportStatus.Idle) && (btnElement.disabled = s)
         },
-        d(a) {
-            a && ht(i), d = !1, u()
+        d(detach) {
+            detach && removeElement(divElement);
+            cleanupFn = !1;
+            eventListenerCleanup()
         }
     }
 }
 
-function nl(f) {
-    let i, n, l;
+function renderExportingMessage(state) {
+    let txtNode, txtNode2, txtNode3;
     return {
         c() {
-            i = It("Exporting "), n = It(f[1]), l = It("...")
+            txtNode = createTextNode("Exporting ");
+            txtNode2 = createTextNode(state[1]);
+            txtNode3 = createTextNode("...")
         },
-        m(s, d) {
-            pt(s, i, d), pt(s, n, d), pt(s, l, d)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor);
+            insertBefore(parentElement, txtNode2, anchor);
+            insertBefore(parentElement, txtNode3, anchor)
         },
-        p(s, d) {
-            d & 2 && ae(n, s[1])
+        p(newState, dirtyFlags) {
+            dirtyFlags & 2 && updateWholeTextNode(txtNode2, newState[1])
         },
-        d(s) {
-            s && ht(i), s && ht(n), s && ht(l)
+        d(detach) {
+            detach && removeElement(txtNode);
+            detach && removeElement(txtNode2);
+            detach && removeElement(txtNode3)
         }
     }
 }
 
-function gg(f) {
-    let i, n = f[2] === Ct.Working && nl(f);
+function ggExportStatus(state) {
+    let emptyTextNode, exportMessageComponent = state[2] === ExportStatus.Working && renderExportingMessage(state);
     return {
         c() {
-            n && n.c(), i = yn()
+            exportMessageComponent && exportMessageComponent.c();
+            emptyTextNode = createEmptyTextNode()
         },
-        m(l, s) {
-            n && n.m(l, s), pt(l, i, s)
+        m(parentElement, anchor) {
+            exportMessageComponent && exportMessageComponent.m(parentElement, anchor);
+            insertBefore(parentElement, emptyTextNode, anchor)
         },
-        p(l, s) {
-            l[2] === Ct.Working ? n ? n.p(l, s) : (n = nl(l), n.c(), n.m(i.parentNode, i)) : n && (n.d(1), n = null)
+        p(newState, detach) {
+            newState[2] === ExportStatus.Working ? exportMessageComponent ? exportMessageComponent.p(newState, detach) : (exportMessageComponent = renderExportingMessage(newState), exportMessageComponent.c(), exportMessageComponent.m(emptyTextNode.parentNode, emptyTextNode)) : exportMessageComponent && (exportMessageComponent.d(1), exportMessageComponent = null)
         },
-        d(l) {
-            n && n.d(l), l && ht(i)
+        d(detach) {
+            exportMessageComponent && exportMessageComponent.d(detach);
+            detach && removeElement(emptyTextNode)
         }
     }
 }
 
-function rl(f) {
-    let i, n = f[7] + "",
-        l;
+function createOptionElement(state) {
+    let optionElement, optionValue = state[7] + "",
+        txtNode;
     return {
         c() {
-            i = ot("option"), l = It(n), i.__value = f[7], i.value = i.__value
+            optionElement = createElement("option");
+            txtNode = createTextNode(optionValue);
+            optionElement.__value = state[7];
+            optionElement.value = optionElement.__value
         },
-        m(s, d) {
-            pt(s, i, d), q(i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, optionElement, anchor);
+            appendChild(optionElement, txtNode)
         },
-        p: ne,
-        d(s) {
-            s && ht(i)
+        p: noOperation,
+        d(detach) {
+            detach && removeElement(optionElement)
         }
     }
 }
 
-function mg(f) {
-    let i, n, l, s, d, u, a, m = Object.values(ee).filter(il),
-        _ = [];
-    for (let c = 0; c < m.length; c += 1) _[c] = rl(el(f, m, c));
+function createExportOptionsComponent(state) {
+    let fieldsetElement, selectElement, txtNode, btnElement, isDisabled, isInitialized, eventListeners, optionElements = Object.values(eeExportFormat).filter(isCharacterAI),
+        componentInstances = [];
+    for (let index = 0; index < optionElements.length; index += 1) componentInstances[index] = createOptionElement(updateDiaryEntryArray(state, optionElements, index));
     return {
         c() {
-            i = ot("fieldset"), n = ot("select");
-            for (let c = 0; c < _.length; c += 1) _[c].c();
-            l = Et(), s = ot("button"), s.textContent = "Download", dt(n, "class", "uppercase"), f[0] === void 0 && cr(() => f[6].call(n)), i.disabled = d = f[2] !== Ct.Idle || !f[3], dt(i, "class", "space-x-1")
+            fieldsetElement = createElement("fieldset");
+            selectElement = createElement("select");
+            for (let index2 = 0; index2 < componentInstances.length; index2 += 1) componentInstances[index2].c();
+            txtNode = createSpaceTextNode();
+            btnElement = createElement("button");
+            btnElement.textContent = "Download";
+            setAttribute(selectElement, "class", "uppercase");
+            state[0] === void 0 && addBeforeUpdateCallback(() => state[6].call(selectElement));
+            fieldsetElement.disabled = isDisabled = state[2] !== ExportStatus.Idle || !state[3];
+            setAttribute(fieldsetElement, "class", "space-x-1")
         },
-        m(c, g) {
-            pt(c, i, g), q(i, n);
-            for (let h = 0; h < _.length; h += 1) _[h].m(n, null);
-            fr(n, f[0]), q(i, l), q(i, s), u || (a = [le(n, "change", f[6]), le(s, "click", function() {
-                Ti(f[5]) && f[5].apply(this, arguments)
-            })], u = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, fieldsetElement, anchor);
+            appendChild(fieldsetElement, selectElement);
+            for (let index3 = 0; index3 < componentInstances.length; index3 += 1) componentInstances[index3].m(selectElement, null);
+            selectOptionByValue(selectElement, state[0]);
+            appendChild(fieldsetElement, txtNode);
+            appendChild(fieldsetElement, btnElement);
+            isInitialized || (eventListeners = [addEventListenerWithCleanup(selectElement, "change", state[6]), addEventListenerWithCleanup(btnElement, "click", function() {
+                isFunction(state[5]) && state[5].apply(this, arguments)
+            })], isInitialized = !0)
         },
-        p(c, g) {
-            if (f = c, g & 0) {
-                m = Object.values(ee).filter(il);
-                let h;
-                for (h = 0; h < m.length; h += 1) {
-                    const p = el(f, m, h);
-                    _[h] ? _[h].p(p, g) : (_[h] = rl(p), _[h].c(), _[h].m(n, null))
+        p(newState, dirtyFlags) {
+            if (state = newState, dirtyFlags & 0) {
+                optionElements = Object.values(eeExportFormat).filter(isCharacterAI);
+                let index;
+                for (index = 0; index < optionElements.length; index += 1) {
+                    const optionState = updateDiaryEntryArray(state, optionElements, index);
+                    componentInstances[index] ? componentInstances[index].p(optionState, dirtyFlags) : (componentInstances[index] = createOptionElement(optionState), componentInstances[index].c(), componentInstances[index].m(selectElement, null))
                 }
-                for (; h < _.length; h += 1) _[h].d(1);
-                _.length = m.length
+                for (; index < componentInstances.length; index += 1) componentInstances[index].d(1);
+                componentInstances.length = optionElements.length
             }
-            g & 1 && fr(n, f[0]), g & 12 && d !== (d = f[2] !== Ct.Idle || !f[3]) && (i.disabled = d)
+            dirtyFlags & 1 && selectOptionByValue(selectElement, state[0]), dirtyFlags & 12 && isDisabled !== (isDisabled = state[2] !== ExportStatus.Idle || !state[3]) && (fieldsetElement.disabled = isDisabled)
         },
-        d(c) {
-            c && ht(i), Dn(_, c), u = !1, tn(a)
+        d(detach) {
+            detach && removeElement(fieldsetElement);
+            callDestroyMethods(componentInstances, detach);
+            isInitialized = !1;
+            executeAll(eventListeners)
         }
     }
 }
 
-function vg(f) {
-    let i, n, l, s, d;
-    return n = new dr({
+function createExportComponent(state) {
+    let divElement, newExportComponent, spaceNode, downloadExportComponent, isMounted;
+    return newExportComponent = new ExportComponent({
         props: {
-            title: "New " + f[1] + " Export",
+            title: "New " + state[1] + " Export",
             $$slots: {
-                body: [gg],
-                head: [_g]
+                body: [ggExportStatus],
+                head: [createExportButtonComponent]
             },
             $$scope: {
-                ctx: f
+                ctx: state
             }
         }
-    }), s = new dr({
+    }), downloadExportComponent = new ExportComponent({
         props: {
-            title: "Download " + f[1],
+            title: "Download " + state[1],
             $$slots: {
-                head: [mg]
+                head: [createExportOptionsComponent]
             },
             $$scope: {
-                ctx: f
+                ctx: state
             }
         }
     }), {
         c() {
-            i = ot("div"), Ee(n.$$.fragment), l = Et(), Ee(s.$$.fragment), dt(i, "class", "space-y-8")
+            divElement = createElement("div");
+            createFragment(newExportComponent.$$.fragment);
+            spaceNode = createSpaceTextNode();
+            createFragment(downloadExportComponent.$$.fragment);
+            setAttribute(divElement, "class", "space-y-8")
         },
-        m(u, a) {
-            pt(u, i, a), ye(n, i, null), q(i, l), ye(s, i, null), d = !0
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            mountComponent(newExportComponent, divElement, null);
+            appendChild(divElement, spaceNode);
+            mountComponent(downloadExportComponent, divElement, null);
+            isMounted = !0
         },
-        p(u, [a]) {
-            const m = {};
-            a & 2 && (m.title = "New " + u[1] + " Export"), a & 1046 && (m.$$scope = {
-                dirty: a,
-                ctx: u
-            }), n.$set(m);
-            const _ = {};
-            a & 2 && (_.title = "Download " + u[1]), a & 1069 && (_.$$scope = {
-                dirty: a,
-                ctx: u
-            }), s.$set(_)
+        p(newState, [dirtyFlags]) {
+            const updatedProps = {};
+            dirtyFlags & 2 && (updatedProps.title = "New " + newState[1] + " Export"), dirtyFlags & 1046 && (updatedProps.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), newExportComponent.$set(updatedProps);
+            const downloadProps = {};
+            dirtyFlags & 2 && (downloadProps.title = "Download " + newState[1]), dirtyFlags & 1069 && (downloadProps.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), downloadExportComponent.$set(downloadProps)
         },
-        i(u) {
-            d || (Ht(n.$$.fragment, u), Ht(s.$$.fragment, u), d = !0)
+        i(isIntro) {
+            isMounted || (invokeInitFunction(newExportComponent.$$.fragment, isIntro), invokeInitFunction(downloadExportComponent.$$.fragment, isIntro), isMounted = !0)
         },
-        o(u) {
-            qt(n.$$.fragment, u), qt(s.$$.fragment, u), d = !1
+        o(isOutro) {
+            handlePromise(newExportComponent.$$.fragment, isOutro);
+            handlePromise(downloadExportComponent.$$.fragment, isOutro);
+            isMounted = !1
         },
-        d(u) {
-            u && ht(i), be(n), be(s)
+        d(detach) {
+            detach && removeElement(divElement);
+            destroyComponent(newExportComponent);
+            destroyComponent(downloadExportComponent)
         }
     }
 }
-const il = f => f !== "character.ai";
+const isCharacterAI = f => f !== "character.ai";
 
-function wg(f, i, n) {
+function handleExportState(f, props, updateState) {
     let {
-        name: l = ""
-    } = i, {
-        status: s
-    } = i, {
-        hasContent: d = !1
-    } = i, {
-        exportFormat: u
-    } = i, {
-        onExport: a
-    } = i, {
-        onDownload: m
-    } = i;
+        name: exportName = ""
+    } = props, {
+        status: exportStatus
+    } = props, {
+        hasContent: hasExportContent = !1
+    } = props, {
+        exportFormat: selectedExportFormat
+    } = props, {
+        onExport: exportCallback
+    } = props, {
+        onDownload: downloadCallback
+    } = props;
 
     function _() {
-        u = Vs(this), n(0, u)
+        selectedExportFormat = getCheckedValue(this), updateState(0, selectedExportFormat)
     }
-    return f.$$set = c => {
-        "name" in c && n(1, l = c.name), "status" in c && n(2, s = c.status), "hasContent" in c && n(3, d = c.hasContent), "exportFormat" in c && n(0, u = c.exportFormat), "onExport" in c && n(4, a = c.onExport), "onDownload" in c && n(5, m = c.onDownload)
-    }, [u, l, s, d, a, m, _]
+    return f.$$set = changes => {
+        "name" in changes && updateState(1, exportName = changes.name), "status" in changes && updateState(2, exportStatus = changes.status), "hasContent" in changes && updateState(3, hasExportContent = changes.hasContent), "exportFormat" in changes && updateState(0, selectedExportFormat = changes.exportFormat), "onExport" in changes && updateState(4, exportCallback = changes.onExport), "onDownload" in changes && updateState(5, downloadCallback = changes.onDownload)
+    }, [selectedExportFormat, exportName, exportStatus, hasExportContent, exportCallback, downloadCallback, _]
 }
-class Il extends rn {
-    constructor(i) {
-        super(), nn(this, i, wg, vg, en, {
+class IlExportComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, handleExportState, createExportComponent, isEqual, {
             name: 1,
             status: 2,
             hasContent: 3,
@@ -1993,224 +2230,256 @@ class Il extends rn {
     }
 }
 
-function sl(f, i, n) {
-    const l = f.slice();
-    return l[8] = i[n], l
+function updateSliceAtIndex(f, i, index) {
+    const newArray = f.slice();
+    return newArray[8] = i[index], newArray
 }
 
-function ol(f, i, n) {
-    const l = f.slice();
-    return l[11] = i[n], l
+function updateSliceAtIndexForExportFormat(f, i, index) {
+    const newArray = f.slice();
+    return newArray[11] = i[index], newArray
 }
 
-function al(f) {
-    let i, n = f[11].text + "",
-        l;
+function createTextParagraph(state) {
+    let pElement, txtConent = state[11].text + "",
+        txtNode;
     return {
         c() {
-            i = ot("p"), l = It(n), dt(i, "class", "opacity-80")
+            pElement = createElement("p");
+            txtNode = createTextNode(txtConent);
+            setAttribute(pElement, "class", "opacity-80")
         },
-        m(s, d) {
-            pt(s, i, d), q(i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, pElement, anchor);
+            appendChild(pElement, txtNode)
         },
-        p(s, d) {
-            d & 2 && n !== (n = s[11].text + "") && ae(l, n)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 2 && txtConent !== (txtConent = newState[11].text + "") && updateWholeTextNode(txtNode, txtConent)
         },
-        d(s) {
-            s && ht(i)
+        d(detach) {
+            detach && removeElement(pElement)
         }
     }
 }
 
-function ul(f) {
-    let i, n = f[11].type === "text" && al(f);
+function createTextElement(state) {
+    let txtElement, textParagraph = state[11].type === "text" && createTextParagraph(state);
     return {
         c() {
-            n && n.c(), i = yn()
+            textParagraph && textParagraph.c();
+            txtElement = createEmptyTextNode()
         },
-        m(l, s) {
-            n && n.m(l, s), pt(l, i, s)
+        m(parentElment, anchor) {
+            textParagraph && textParagraph.m(parentElment, anchor);
+            insertBefore(parentElment, txtElement, anchor)
         },
-        p(l, s) {
-            l[11].type === "text" ? n ? n.p(l, s) : (n = al(l), n.c(), n.m(i.parentNode, i)) : n && (n.d(1), n = null)
+        p(newState, dirtyFlags) {
+            newState[11].type === "text" ? textParagraph ? textParagraph.p(newState, dirtyFlags) : (textParagraph = createTextParagraph(newState), textParagraph.c(), textParagraph.m(txtElement.parentNode, txtElement)) : textParagraph && (textParagraph.d(1), textParagraph = null)
         },
-        d(l) {
-            n && n.d(l), l && ht(i)
+        d(detach) {
+            textParagraph && textParagraph.d(detach);
+            detach && removeElement(txtElement)
         }
     }
 }
 
-function ll(f) {
-    let i, n, l = new Date(f[8].timestamp).toLocaleDateString() + "",
-        s, d, u, a = f[8].name + "",
-        m, _, c, g = f[8].entries,
-        h = [];
-    for (let p = 0; p < g.length; p += 1) h[p] = ul(ol(f, g, p));
+function createDiaryEntries(state) {
+    let divElement, pElement, dateText = new Date(state[8].timestamp).toLocaleDateString() + "",
+        txtNode, spaceNode, h2Element, titleTxt = state[8].name + "",
+        txtNode2, spaceNode2, spaceNode3, entryList = state[8].entries,
+        entryInstances = [];
+    for (let index = 0; index < entryList.length; index += 1) entryInstances[index] = createTextElement(updateSliceAtIndexForExportFormat(state, entryList, index));
     return {
         c() {
-            i = ot("div"), n = ot("p"), s = It(l), d = Et(), u = ot("h2"), m = It(a), _ = Et();
-            for (let p = 0; p < h.length; p += 1) h[p].c();
-            c = Et(), dt(n, "class", "text-center text-xs opacity-80"), dt(u, "class", "text-xl font-bold"), dt(i, "class", "space-y-2")
+            divElement = createElement("div");
+            pElement = createElement("p");
+            txtNode = createTextNode(dateText);
+            spaceNode = createSpaceTextNode();
+            h2Element = createElement("h2");
+            txtNode2 = createTextNode(titleTxt);
+            spaceNode2 = createSpaceTextNode();
+            for (let index2 = 0; index2 < entryInstances.length; index2 += 1) entryInstances[index2].c();
+            spaceNode3 = createSpaceTextNode();
+            setAttribute(pElement, "class", "text-center text-xs opacity-80");
+            setAttribute(h2Element, "class", "text-xl font-bold");
+            setAttribute(divElement, "class", "space-y-2")
         },
-        m(p, x) {
-            pt(p, i, x), q(i, n), q(n, s), q(i, d), q(i, u), q(u, m), q(i, _);
-            for (let y = 0; y < h.length; y += 1) h[y].m(i, null);
-            q(i, c)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, pElement);
+            appendChild(pElement, txtNode);
+            appendChild(divElement, spaceNode);
+            appendChild(divElement, h2Element);
+            appendChild(h2Element, txtNode2);
+            appendChild(divElement, spaceNode2);
+            for (let index3 = 0; index3 < entryInstances.length; index3 += 1) entryInstances[index3].m(divElement, null);
+            appendChild(divElement, spaceNode3)
         },
-        p(p, x) {
-            if (x & 2 && l !== (l = new Date(p[8].timestamp).toLocaleDateString() + "") && ae(s, l), x & 2 && a !== (a = p[8].name + "") && ae(m, a), x & 2) {
-                g = p[8].entries;
-                let y;
-                for (y = 0; y < g.length; y += 1) {
-                    const A = ol(p, g, y);
-                    h[y] ? h[y].p(A, x) : (h[y] = ul(A), h[y].c(), h[y].m(i, c))
+        p(newState, dirtyFlags) {
+            if (dirtyFlags & 2 && dateText !== (dateText = new Date(newState[8].timestamp).toLocaleDateString() + "") && updateWholeTextNode(txtNode, dateText), dirtyFlags & 2 && titleTxt !== (titleTxt = newState[8].name + "") && updateWholeTextNode(txtNode2, titleTxt), dirtyFlags & 2) {
+                entryList = newState[8].entries;
+                let entryIndex;
+                for (entryIndex = 0; entryIndex < entryList.length; entryIndex += 1) {
+                    const A = updateSliceAtIndexForExportFormat(newState, entryList, entryIndex);
+                    entryInstances[entryIndex] ? entryInstances[entryIndex].p(A, dirtyFlags) : (entryInstances[entryIndex] = createTextElement(A), entryInstances[entryIndex].c(), entryInstances[entryIndex].m(divElement, spaceNode3))
                 }
-                for (; y < h.length; y += 1) h[y].d(1);
-                h.length = g.length
+                for (; entryIndex < entryInstances.length; entryIndex += 1) entryInstances[entryIndex].d(1);
+                entryInstances.length = entryList.length
             }
         },
-        d(p) {
-            p && ht(i), Dn(h, p)
+        d(detach) {
+            detach && removeElement(divElement);
+            callDestroyMethods(entryInstances, detach)
         }
     }
 }
 
-function yg(f) {
-    let i, n, l, s, d;
+function createDiaryComponent(props) {
+    let diaryComponent, n, txtNode, divElement, isMounted;
 
-    function u(c) {
-        f[6](c)
+    function handleExportFormat(c) {
+        props[6](c)
     }
-    let a = {
+    let componentProps = {
         name: "Diary",
-        status: f[0],
-        onExport: f[4],
-        onDownload: f[5],
-        hasContent: f[1].length > 0
+        status: props[0],
+        onExport: props[4],
+        onDownload: props[5],
+        hasContent: props[1].length > 0
     };
-    f[3] !== void 0 && (a.exportFormat = f[3]), i = new Il({
-        props: a
-    }), Dr.push(() => xl(i, "exportFormat", u));
-    let m = f[1],
-        _ = [];
-    for (let c = 0; c < m.length; c += 1) _[c] = ll(sl(f, m, c));
+    props[3] !== void 0 && (componentProps.exportFormat = props[3]), diaryComponent = new IlExportComponent({
+        props: componentProps
+    }), afterUpdateCallbacks.push(() => bindComponentProp(diaryComponent, "exportFormat", handleExportFormat));
+    let entries = props[1],
+        entryInstances = [];
+    for (let index = 0; index < entries.length; index += 1) entryInstances[index] = createDiaryEntries(updateSliceAtIndex(props, entries, index));
     return {
         c() {
-            Ee(i.$$.fragment), l = Et(), s = ot("div");
-            for (let c = 0; c < _.length; c += 1) _[c].c();
-            dt(s, "class", "my-12 space-y-8")
+            createFragment(diaryComponent.$$.fragment);
+            txtNode = createSpaceTextNode();
+            divElement = createElement("div");
+            for (let index2 = 0; index2 < entryInstances.length; index2 += 1) entryInstances[index2].c();
+            setAttribute(divElement, "class", "my-12 space-y-8")
         },
-        m(c, g) {
-            ye(i, c, g), pt(c, l, g), pt(c, s, g);
-            for (let h = 0; h < _.length; h += 1) _[h].m(s, null);
-            f[7](s), d = !0
+        m(parentElement, anchor) {
+            mountComponent(diaryComponent, parentElement, anchor);
+            insertBefore(parentElement, txtNode, anchor);
+            insertBefore(parentElement, divElement, anchor);
+            for (let index3 = 0; index3 < entryInstances.length; index3 += 1) entryInstances[index3].m(divElement, null);
+            props[7](divElement);
+            isMounted = !0
         },
-        p(c, [g]) {
-            const h = {};
-            if (g & 1 && (h.status = c[0]), g & 2 && (h.hasContent = c[1].length > 0), !n && g & 8 && (n = !0, h.exportFormat = c[3], bl(() => n = !1)), i.$set(h), g & 2) {
-                m = c[1];
-                let p;
-                for (p = 0; p < m.length; p += 1) {
-                    const x = sl(c, m, p);
-                    _[p] ? _[p].p(x, g) : (_[p] = ll(x), _[p].c(), _[p].m(s, null))
+        p(newState, [dirtyFlags]) {
+            const updates = {};
+            if (dirtyFlags & 1 && (updates.status = newState[0]), dirtyFlags & 2 && (updates.hasContent = newState[1].length > 0), !n && dirtyFlags & 8 && (n = !0, updates.exportFormat = newState[3], addCleanupCallback(() => n = !1)), diaryComponent.$set(updates), dirtyFlags & 2) {
+                entries = newState[1];
+                let entryIndex;
+                for (entryIndex = 0; entryIndex < entries.length; entryIndex += 1) {
+                    const x = updateSliceAtIndex(newState, entries, entryIndex);
+                    entryInstances[entryIndex] ? entryInstances[entryIndex].p(x, dirtyFlags) : (entryInstances[entryIndex] = createDiaryEntries(x), entryInstances[entryIndex].c(), entryInstances[entryIndex].m(divElement, null))
                 }
-                for (; p < _.length; p += 1) _[p].d(1);
-                _.length = m.length
+                for (; entryIndex < entryInstances.length; entryIndex += 1) entryInstances[entryIndex].d(1);
+                entryInstances.length = entries.length
             }
         },
-        i(c) {
-            d || (Ht(i.$$.fragment, c), d = !0)
+        i(isIntro) {
+            isMounted || (invokeInitFunction(diaryComponent.$$.fragment, isIntro), isMounted = !0)
         },
-        o(c) {
-            qt(i.$$.fragment, c), d = !1
+        o(isOutro) {
+            handlePromise(diaryComponent.$$.fragment, isOutro);
+            isMounted = !1
         },
-        d(c) {
-            be(i, c), c && ht(l), c && ht(s), Dn(_, c), f[7](null)
+        d(detach) {
+            destroyComponent(diaryComponent, detach);
+            detach && removeElement(txtNode);
+            detach && removeElement(divElement);
+            callDestroyMethods(entryInstances, detach);
+            props[7](null)
         }
     }
 }
 
-function bg(f, i, n) {
-    let l = Ct.Idle,
-        s = [],
-        d, u = ee.TXT;
-    async function a() {
-        n(0, l = Ct.Working);
+function handleExport(f, i, exportStatusCallback) {//prev exportStatusCallback was n
+    let currentStatus = ExportStatus.Idle,
+        exportedEntries = [],
+        exportedContent, exportFormat = eeExportFormat.TXT;
+    async function fetchDiaryEntries() {
+        exportStatusCallback(0, currentStatus = ExportStatus.Working);
         const {
-            error: g,
-            data: h
-        } = await hr();
-        if (g) {
-            n(0, l = Ct.Idle);
+            error: authError,
+            data: authData
+        } = await extractAuthData();
+        if (authError) {
+            exportStatusCallback(0, currentStatus = ExportStatus.Idle);
             return
         }
-        const p = new dg(zr(h));
-        n(1, s = await p.export()), n(0, l = Ct.Idle)
+        const diaryService = new DiaryService(createRequestHeaders(authData));
+        exportStatusCallback(1, exportedEntries = await diaryService.export()), exportStatusCallback(0, currentStatus = ExportStatus.Idle)
     }
 
-    function m() {
-        switch (n(0, l = Ct.Working), u) {
-            case ee.HTML:
-                Me(d.innerHTML, "text/html", Ri("diary", ee.HTML));
+    function downloadDiaryEntries() {
+        switch (exportStatusCallback(0, currentStatus = ExportStatus.Working), exportFormat) {
+            case eeExportFormat.HTML:
+                downloadContent(exportedContent.innerHTML, "text/html", generateFileName("diary", eeExportFormat.HTML));
             default:
-                pg(s, u);
+                exportDiaryEntries(exportedEntries, exportFormat);
                 break
         }
-        n(0, l = Ct.Idle)
+        exportStatusCallback(0, currentStatus = ExportStatus.Idle)
     }
 
-    function _(g) {
-        u = g, n(3, u)
+    function setExportFormat(newFormat) {
+        exportFormat = newFormat, exportStatusCallback(3, exportFormat)
     }
 
-    function c(g) {
-        Dr[g ? "unshift" : "push"](() => {
-            d = g, n(2, d)
+    function updateExportedContent(isContentReady) {
+        afterUpdateCallbacks[isContentReady ? "unshift" : "push"](() => {
+            exportedContent = isContentReady, exportStatusCallback(2, exportedContent)
         })
     }
-    return [l, s, d, u, a, m, _, c]
+    return [currentStatus, exportedEntries, exportedContent, exportFormat, fetchDiaryEntries, downloadDiaryEntries, setExportFormat, updateExportedContent]
 }
-class xg extends rn {
-    constructor(i) {
-        super(), nn(this, i, bg, yg, en, {})
+class DiaryComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, handleExport, createDiaryComponent, isEqual, {})
     }
 }
-async function kg(f, i) {
-    const n = Ri("memory", i);
-    switch (i) {
-        case ee.TXT: {
-            const l = f.map(s => [new Date(s.creation_timestamp).toLocaleDateString(), s.text].join(`
+async function downloadFormattedDiaryEntries(diaryEntries, format) {
+    const fileName = generateFileName("memory", format);
+    switch (format) {
+        case eeExportFormat.TXT: {
+            const textContent = diaryEntries.map(s => [new Date(s.creation_timestamp).toLocaleDateString(), s.text].join(`
 
 `)).join(`
 
 ${"-".repeat(80)}
 
 `);
-            Me(l, "text/plain", n);
+            downloadContent(textContent, "text/plain", fileName);
             break
         }
-        case ee.HTML: {
-            const l = f.map(s => `
+        case eeExportFormat.HTML: {
+            const htmlContent = diaryEntries.map(s => `
             <p>
               ${new Date(s.creation_timestamp).toLocaleDateString()}
               <br />
               ${s.text}
             </p>
             `).join("");
-            Me(l, "text/plain", n);
+            downloadContent(htmlContent, "text/plain", fileName);
             break
         }
-        case ee.CSV: {
-            const l = ao(f.map(s => ({
-                date: new Date(s.creation_timestamp).toLocaleDateString(),
-                content: s.text
+        case eeExportFormat.CSV: {
+            const csvContent = convertToCSV(diaryEntries.map(entry => ({
+                date: new Date(entry.creation_timestamp).toLocaleDateString(),
+                content: entry.text
             })));
-            Me(l, "text/csv", n);
+            downloadContent(csvContent, "text/csv", fileName);
             break
         }
-        case ee.JSON: {
-            const l = JSON.stringify(f, null, 2);
-            Me(l, "application/json", n);
+        case eeExportFormat.JSON: {
+            const jsonContent = JSON.stringify(diaryEntries, null, 2);
+            downloadContent(jsonContent, "application/json", fileName);
             break
         }
         default:
@@ -2218,699 +2487,817 @@ ${"-".repeat(80)}
     }
 }
 
-function fl(f, i, n) {
-    const l = f.slice();
-    return l[7] = i[n].creation_timestamp, l[8] = i[n].text, l
+function createFactSlice(factArray, factList, index) {
+    const newFactArray = factArray.slice();
+    return newFactArray[7] = factList[index].creation_timestamp, newFactArray[8] = factList[index].text, newFactArray
 }
 
-function cl(f) {
-    let i, n, l = new Date(f[7]).toLocaleDateString() + "",
-        s, d, u, a = f[8] + "",
-        m, _;
+function createMemoryFactsElement(memoryData) {
+    let divElement, pElement, formattedDate = new Date(memoryData[7]).toLocaleDateString() + "",
+        txtNode, spaceNode, pElement2, memoryText = memoryData[8] + "",
+        txtNode2, spaceNode2;
     return {
         c() {
-            i = ot("div"), n = ot("p"), s = It(l), d = Et(), u = ot("p"), m = It(a), _ = Et(), dt(n, "class", "text-xs op80"), dt(u, "class", ""), dt(i, "class", "space-y-2 text-center")
+            divElement = createElement("div");
+            pElement = createElement("p");
+            txtNode = createTextNode(formattedDate);
+            spaceNode = createSpaceTextNode();
+            pElement2 = createElement("p");
+            txtNode2 = createTextNode(memoryText);
+            spaceNode2 = createSpaceTextNode();
+            setAttribute(pElement, "class", "text-xs op80");
+            setAttribute(pElement2, "class", "");
+            setAttribute(divElement, "class", "space-y-2 text-center")
         },
-        m(c, g) {
-            pt(c, i, g), q(i, n), q(n, s), q(i, d), q(i, u), q(u, m), q(i, _)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, divElement, anchor);
+            appendChild(divElement, pElement);
+            appendChild(pElement, txtNode);
+            appendChild(divElement, spaceNode);
+            appendChild(divElement, pElement2);
+            appendChild(pElement2, txtNode2);
+            appendChild(divElement, spaceNode2)
         },
-        p(c, g) {
-            g & 4 && l !== (l = new Date(c[7]).toLocaleDateString() + "") && ae(s, l), g & 4 && a !== (a = c[8] + "") && ae(m, a)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 4 && formattedDate !== (formattedDate = new Date(newState[7]).toLocaleDateString() + "") && updateWholeTextNode(txtNode, formattedDate), dirtyFlags & 4 && memoryText !== (memoryText = newState[8] + "") && updateWholeTextNode(txtNode2, memoryText)
         },
-        d(c) {
-            c && ht(i)
+        d(detach) {
+            detach && removeElement(divElement)
         }
     }
 }
 
-function Sg(f) {
-    let i, n, l, s, d, u, a;
+function createMemoryExportComponent(memoryState) {
+    let exportComponentInstance, n, spaceNode, errorComponentInstance, spaceNode2, divElement, hasInitialized;
 
-    function m(h) {
-        f[6](h)
+    function handleExportFormatChange(h) {
+        memoryState[6](h)
     }
-    let _ = {
+    let exportComponentProps = {
         name: "Memory",
-        status: f[0],
-        onExport: f[4],
-        onDownload: f[5],
-        hasContent: f[2].length > 0
+        status: memoryState[0],
+        onExport: memoryState[4],
+        onDownload: memoryState[5],
+        hasContent: memoryState[2].length > 0
     };
-    f[3] !== void 0 && (_.exportFormat = f[3]), i = new Il({
-        props: _
-    }), Dr.push(() => xl(i, "exportFormat", m)), s = new Al({
+    memoryState[3] !== void 0 && (exportComponentProps.exportFormat = memoryState[3]), exportComponentInstance = new IlExportComponent({
+        props: exportComponentProps
+    }), afterUpdateCallbacks.push(() => bindComponentProp(exportComponentInstance, "exportFormat", handleExportFormatChange)), errorComponentInstance = new AlErrorComponent({
         props: {
-            error: f[1]
+            error: memoryState[1]
         }
     });
-    let c = f[2],
-        g = [];
-    for (let h = 0; h < c.length; h += 1) g[h] = cl(fl(f, c, h));
+    let memoryFacts = memoryState[2],
+        memoryFactsElements = [];
+    for (let index = 0; index < memoryFacts.length; index += 1) memoryFactsElements[index] = createMemoryFactsElement(createFactSlice(memoryState, memoryFacts, index));
     return {
         c() {
-            Ee(i.$$.fragment), l = Et(), Ee(s.$$.fragment), d = Et(), u = ot("div");
-            for (let h = 0; h < g.length; h += 1) g[h].c();
-            dt(u, "class", "my-12 space-y-8")
+            createFragment(exportComponentInstance.$$.fragment);
+            spaceNode = createSpaceTextNode();
+            createFragment(errorComponentInstance.$$.fragment);
+            spaceNode2 = createSpaceTextNode();
+            divElement = createElement("div");
+            for (let index2 = 0; index2 < memoryFactsElements.length; index2 += 1) memoryFactsElements[index2].c();
+            setAttribute(divElement, "class", "my-12 space-y-8")
         },
-        m(h, p) {
-            ye(i, h, p), pt(h, l, p), ye(s, h, p), pt(h, d, p), pt(h, u, p);
-            for (let x = 0; x < g.length; x += 1) g[x].m(u, null);
-            a = !0
+        m(parentElement, anchor) {
+            mountComponent(exportComponentInstance, parentElement, anchor);
+            insertBefore(parentElement, spaceNode, anchor);
+            mountComponent(errorComponentInstance, parentElement, anchor);
+            insertBefore(parentElement, spaceNode2, anchor);
+            insertBefore(parentElement, divElement, anchor);
+            for (let index3 = 0; index3 < memoryFactsElements.length; index3 += 1) memoryFactsElements[index3].m(divElement, null);
+            hasInitialized = !0
         },
-        p(h, [p]) {
+        p(newState, [dirtyFlags]) {
             const x = {};
-            p & 1 && (x.status = h[0]), p & 4 && (x.hasContent = h[2].length > 0), !n && p & 8 && (n = !0, x.exportFormat = h[3], bl(() => n = !1)), i.$set(x);
+            dirtyFlags & 1 && (x.status = newState[0]), dirtyFlags & 4 && (x.hasContent = newState[2].length > 0), !n && dirtyFlags & 8 && (n = !0, x.exportFormat = newState[3], addCleanupCallback(() => n = !1)), exportComponentInstance.$set(x);
             const y = {};
-            if (p & 2 && (y.error = h[1]), s.$set(y), p & 4) {
-                c = h[2];
+            if (dirtyFlags & 2 && (y.error = newState[1]), errorComponentInstance.$set(y), dirtyFlags & 4) {
+                memoryFacts = newState[2];
                 let A;
-                for (A = 0; A < c.length; A += 1) {
-                    const S = fl(h, c, A);
-                    g[A] ? g[A].p(S, p) : (g[A] = cl(S), g[A].c(), g[A].m(u, null))
+                for (A = 0; A < memoryFacts.length; A += 1) {
+                    const S = createFactSlice(newState, memoryFacts, A);
+                    memoryFactsElements[A] ? memoryFactsElements[A].p(S, dirtyFlags) : (memoryFactsElements[A] = createMemoryFactsElement(S), memoryFactsElements[A].c(), memoryFactsElements[A].m(divElement, null))
                 }
-                for (; A < g.length; A += 1) g[A].d(1);
-                g.length = c.length
+                for (; A < memoryFactsElements.length; A += 1) memoryFactsElements[A].d(1);
+                memoryFactsElements.length = memoryFacts.length
             }
         },
-        i(h) {
-            a || (Ht(i.$$.fragment, h), Ht(s.$$.fragment, h), a = !0)
+        i(isIntro) {
+            hasInitialized || (invokeInitFunction(exportComponentInstance.$$.fragment, isIntro), invokeInitFunction(errorComponentInstance.$$.fragment, isIntro), hasInitialized = !0)
         },
-        o(h) {
-            qt(i.$$.fragment, h), qt(s.$$.fragment, h), a = !1
+        o(isOutro) {
+            handlePromise(exportComponentInstance.$$.fragment, isOutro), handlePromise(errorComponentInstance.$$.fragment, isOutro), hasInitialized = !1
         },
-        d(h) {
-            be(i, h), h && ht(l), be(s, h), h && ht(d), h && ht(u), Dn(g, h)
+        d(detach) {
+            destroyComponent(exportComponentInstance, detach);
+            detach && removeElement(spaceNode);
+            destroyComponent(errorComponentInstance, detach);
+            detach && removeElement(spaceNode2);
+            detach && removeElement(divElement);
+            callDestroyMethods(memoryFactsElements, detach)
         }
     }
 }
 
-function Ag(f, i, n) {
-    let l = Ct.Idle,
-        s = null,
-        d = [],
-        u = ee.TXT;
-    async function a() {
+function MemoryExportController(f, i, setState) {
+    let exportStatus = ExportStatus.Idle,
+        exportError = null,
+        memoryFacts = [],
+        exportFormat = eeExportFormat.TXT;
+    async function handleMemoryExport() {
         try {
-            n(2, d = []), n(0, l = Ct.Working);
+            setState(2, memoryFacts = []), setState(0, exportStatus = ExportStatus.Working);
             const {
-                error: c,
-                data: g
-            } = await hr();
-            if (c) throw c;
-            const p = await (await fetch("https://my.replika.ai/api/mobile/1.4/memory", {
-                headers: zr(g)
+                error: authError,
+                data: authData
+            } = await extractAuthData();
+            if (authError) throw authError;
+            const memoryResponse = await (await fetch("https://my.replika.ai/api/mobile/1.4/memory", {
+                headers: createRequestHeaders(authData)
             })).json();
-            if (!Array.isArray(p.facts)) throw {
+            if (!Array.isArray(memoryResponse.facts)) throw {
                 message: "unexpected response, no facts found",
-                json: p
+                json: memoryResponse
             };
-            n(2, d = p.facts);
-            const y = await (await fetch("https://my.replika.ai/api/mobile/1.5/memory/v3/", {
-                headers: zr(g)
+            setState(2, memoryFacts = memoryResponse.facts);
+            const additionalMemoryResponse = await (await fetch("https://my.replika.ai/api/mobile/1.5/memory/v3/", {
+                headers: createRequestHeaders(authData)
             })).json();
-            n(2, d = [...d, ...y.customer_facts, ...y.robot_facts]), console.log(d)
-        } catch (c) {
-            console.warn(c), n(1, s = c)
+            setState(2, memoryFacts = [...memoryFacts, ...additionalMemoryResponse.customer_facts, ...additionalMemoryResponse.robot_facts]), console.log(memoryFacts)
+        } catch (error) {
+            console.warn(error), setState(1, exportError = error)
         } finally {
-            n(0, l = Ct.Idle)
+            setState(0, exportStatus = ExportStatus.Idle)
         }
     }
 
-    function m() {
-        n(0, l = Ct.Working), kg(d, u), n(0, l = Ct.Idle)
+    function handleDiaryDownload() {
+        setState(0, exportStatus = ExportStatus.Working), downloadFormattedDiaryEntries(memoryFacts, exportFormat), setState(0, exportStatus = ExportStatus.Idle)
     }
 
-    function _(c) {
-        u = c, n(3, u)
+    function handleFormatChange(newFormat) {
+        exportFormat = newFormat, setState(3, exportFormat)
     }
-    return [l, s, d, u, a, m, _]
+    return [exportStatus, exportError, memoryFacts, exportFormat, handleMemoryExport, handleDiaryDownload, handleFormatChange]
 }
-class Eg extends rn {
-    constructor(i) {
-        super(), nn(this, i, Ag, Sg, en, {})
+class MemoryExportComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, MemoryExportController, createMemoryExportComponent, isEqual, {})
     }
 }
 
-function Cg(f) {
-    let i;
+function createNoImagesMessage() {
+    let txtNode;
     return {
         c() {
-            i = It(`no images found, make sure to export text messages first using the chat
-    export`)
+            txtNode = createTextNode(`no images found, make sure to export text messages first using the chat export`)
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        p: ne,
-        i: ne,
-        o: ne,
-        d(n) {
-            n && ht(i)
+        p: noOperation,
+        i: noOperation,
+        o: noOperation,
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function Ig(f) {
-    let i, n;
-    return i = new dr({
+function createImageExportComponent(state) {
+    let exportComponentInstance, hasInitialized;
+    return exportComponentInstance = new ExportComponent({
         props: {
             title: "New Image Export",
             $$slots: {
-                body: [Rg],
-                caption: [Og],
-                head: [Tg]
+                body: [createExportSettingsForm],
+                caption: [createImageCountDisplay],
+                head: [createStartExportButton]
             },
             $$scope: {
-                ctx: f
+                ctx: state
             }
         }
     }), {
         c() {
-            Ee(i.$$.fragment)
+            createFragment(exportComponentInstance.$$.fragment)
         },
-        m(l, s) {
-            ye(i, l, s), n = !0
+        m(parentElement, anchor) {
+            mountComponent(exportComponentInstance, parentElement, anchor);
+            hasInitialized = !0
         },
-        p(l, s) {
-            const d = {};
-            s & 1087 && (d.$$scope = {
-                dirty: s,
-                ctx: l
-            }), i.$set(d)
+        p(newState, dirtyFlags) {
+            const updatedProps = {};
+            dirtyFlags & 1087 && (updatedProps.$$scope = {
+                dirty: dirtyFlags,
+                ctx: newState
+            }), exportComponentInstance.$set(updatedProps)
         },
-        i(l) {
-            n || (Ht(i.$$.fragment, l), n = !0)
+        i(isIntro) {
+            hasInitialized || (invokeInitFunction(exportComponentInstance.$$.fragment, isIntro), hasInitialized = !0)
         },
-        o(l) {
-            qt(i.$$.fragment, l), n = !1
+        o(isOutro) {
+            handlePromise(exportComponentInstance.$$.fragment, isOutro), hasInitialized = !1
         },
-        d(l) {
-            be(i, l)
+        d(detach) {
+            destroyComponent(exportComponentInstance, detach)
         }
     }
 }
 
-function Tg(f) {
-    let i, n, l, s, d;
+function createStartExportButton(state) {
+    let btnElement, txtNode, isButtonDisabled, isListenerAttached, d;
     return {
         c() {
-            i = ot("button"), n = It("Start Export"), i.disabled = l = f[0] !== Ct.Idle || !f[4]
+            btnElement = createElement("button");
+            txtNode = createTextNode("Start Export");
+            btnElement.disabled = isButtonDisabled = state[0] !== ExportStatus.Idle || !state[4]
         },
-        m(u, a) {
-            pt(u, i, a), q(i, n), s || (d = le(i, "click", f[6]), s = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, btnElement, anchor);
+            appendChild(btnElement, txtNode);
+            isListenerAttached || (d = addEventListenerWithCleanup(btnElement, "click", state[6]), isListenerAttached = !0)
         },
-        p(u, a) {
-            a & 17 && l !== (l = u[0] !== Ct.Idle || !u[4]) && (i.disabled = l)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 17 && isButtonDisabled !== (isButtonDisabled = newState[0] !== ExportStatus.Idle || !newState[4]) && (btnElement.disabled = isButtonDisabled)
         },
-        d(u) {
-            u && ht(i), s = !1, d()
+        d(detach) {
+            detach && removeElement(btnElement);
+            isListenerAttached = !1;
+            d()
         }
     }
 }
 
-function Og(f) {
-    let i = f[5].length + "",
-        n, l;
+function createImageCountDisplay(state) {
+    let imageCountText = state[5].length + "",
+        txtNode, txtNode2;
     return {
         c() {
-            n = It(i), l = It(" images")
+            txtNode = createTextNode(imageCountText);
+            txtNode2 = createTextNode(" images")
         },
-        m(s, d) {
-            pt(s, n, d), pt(s, l, d)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor);
+            insertBefore(parentElement, txtNode2, anchor)
         },
-        p(s, d) {
-            d & 32 && i !== (i = s[5].length + "") && ae(n, i)
+        p(newState, dirtyFlags) {
+            dirtyFlags & 32 && imageCountText !== (imageCountText = newState[5].length + "") && updateWholeTextNode(txtNode, imageCountText)
         },
-        d(s) {
-            s && ht(n), s && ht(l)
+        d(detach) {
+            detach && removeElement(txtNode);
+            detach && removeElement(txtNode2)
         }
     }
 }
 
-function Rg(f) {
-    let i, n, l, s, d, u, a, m, _, c, g, h, p, x, y, A, S, C, T;
+function createExportSettingsForm(state) {
+    let labelElement, inputElement, spaceNode, divElement, spaceNode2, labelElement2, inputElement2, spaceNode3, divElement2, spaceNode4, labelElement3, inputElement3, spaceNode5, divElement3, spaceNode6, preElement, txtNode, listenersAttached, eventListeners;
     return {
         c() {
-            i = ot("label"), n = ot("input"), l = Et(), s = ot("div"), s.innerHTML = `i acknowlege that
+            labelElement = createElement("label");
+            inputElement = createElement("input");
+            spaceNode = createSpaceTextNode();
+            divElement = createElement("div");
+            divElement.innerHTML = `i acknowlege that
                     <a href="https://corsproxy.io">corsproxy.io</a>
                     is used in order to make image download from a not official-replika
                     origin work
                     <br/>
                     i am not affilated with them, but i have choosen them because
-                    they don&#39;t do any logging`, d = Et(), u = ot("label"), a = ot("input"), m = Et(), _ = ot("div"), _.textContent = `chunk size - how many messages to download at the same time
-                    and zip into one archive`, c = Et(), g = ot("label"), h = ot("input"), p = Et(), x = ot("div"), x.textContent = "time in seconds to wait between chunk download", y = Et(), A = ot("pre"), S = It(f[1]), dt(n, "type", "checkbox"), dt(s, "class", "text-xs mt-1"), dt(i, "class", "flex mb4 space-x-4"), dt(a, "type", "number"), dt(a, "min", "1"), dt(_, "class", "text-xs mt-1"), dt(u, "class", "mb4 flex space-x-4"), dt(h, "type", "number"), dt(h, "min", "0"), dt(x, "class", "text-xs mt-1"), dt(g, "class", "mb4 flex space-x-4"), dt(A, "class", "overflow-x-auto")
+                    they don&#39;t do any logging`;
+            spaceNode2 = createSpaceTextNode();
+            labelElement2 = createElement("label");
+            inputElement2 = createElement("input");
+            spaceNode3 = createSpaceTextNode();
+            divElement2 = createElement("div");
+            divElement2.textContent = `chunk size - how many messages to download at the same time and zip into one archive`;
+            spaceNode4 = createSpaceTextNode();
+            labelElement3 = createElement("label");
+            inputElement3 = createElement("input");
+            spaceNode5 = createSpaceTextNode();
+            divElement3 = createElement("div");
+            divElement3.textContent = "time in seconds to wait between chunk download";
+            spaceNode6 = createSpaceTextNode();
+            preElement = createElement("pre");
+            txtNode = createTextNode(state[1]);
+            setAttribute(inputElement, "type", "checkbox");
+            setAttribute(divElement, "class", "text-xs mt-1");
+            setAttribute(labelElement, "class", "flex mb4 space-x-4");
+            setAttribute(inputElement2, "type", "number");
+            setAttribute(inputElement2, "min", "1");
+            setAttribute(divElement2, "class", "text-xs mt-1");
+            setAttribute(labelElement2, "class", "mb4 flex space-x-4");
+            setAttribute(inputElement3, "type", "number");
+            setAttribute(inputElement3, "min", "0");
+            setAttribute(divElement3, "class", "text-xs mt-1");
+            setAttribute(labelElement3, "class", "mb4 flex space-x-4");
+            setAttribute(preElement, "class", "overflow-x-auto")
         },
-        m(L, B) {
-            pt(L, i, B), q(i, n), n.checked = f[4], q(i, l), q(i, s), pt(L, d, B), pt(L, u, B), q(u, a), Ln(a, f[2]), q(u, m), q(u, _), pt(L, c, B), pt(L, g, B), q(g, h), Ln(h, f[3]), q(g, p), q(g, x), pt(L, y, B), pt(L, A, B), q(A, S), C || (T = [le(n, "change", f[7]), le(a, "input", f[8]), le(h, "input", f[9])], C = !0)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, labelElement, anchor);
+            appendChild(labelElement, inputElement);
+            inputElement.checked = state[4];
+            appendChild(labelElement, spaceNode);
+            appendChild(labelElement, divElement);
+            insertBefore(parentElement, spaceNode2, anchor);
+            insertBefore(parentElement, labelElement2, anchor);
+            appendChild(labelElement2, inputElement2);
+            setInputValue(inputElement2, state[2]);
+            appendChild(labelElement2, spaceNode3);
+            appendChild(labelElement2, divElement2);
+            insertBefore(parentElement, spaceNode4, anchor);
+            insertBefore(parentElement, labelElement3, anchor);
+            appendChild(labelElement3, inputElement3);
+            setInputValue(inputElement3, state[3]);
+            appendChild(labelElement3, spaceNode5);
+            appendChild(labelElement3, divElement3);
+            insertBefore(parentElement, spaceNode6, anchor);
+            insertBefore(parentElement, preElement, anchor);
+            appendChild(preElement, txtNode);
+            listenersAttached || (eventListeners = [addEventListenerWithCleanup(inputElement, "change", state[7]), addEventListenerWithCleanup(inputElement2, "input", state[8]), addEventListenerWithCleanup(inputElement3, "input", state[9])], listenersAttached = !0)
         },
-        p(L, B) {
-            B & 16 && (n.checked = L[4]), B & 4 && lr(a.value) !== L[2] && Ln(a, L[2]), B & 8 && lr(h.value) !== L[3] && Ln(h, L[3]), B & 2 && ae(S, L[1])
+        p(newState, dirtyFlags) {
+            dirtyFlags & 16 && (inputElement.checked = newState[4]), dirtyFlags & 4 && parseInteger(inputElement2.value) !== newState[2] && setInputValue(inputElement2, newState[2]), dirtyFlags & 8 && parseInteger(inputElement3.value) !== newState[3] && setInputValue(inputElement3, newState[3]), dirtyFlags & 2 && updateWholeTextNode(txtNode, newState[1])
         },
-        d(L) {
-            L && ht(i), L && ht(d), L && ht(u), L && ht(c), L && ht(g), L && ht(y), L && ht(A), C = !1, tn(T)
+        d(detach) {
+            detach && removeElement(labelElement);
+            detach && removeElement(spaceNode2);
+            detach && removeElement(labelElement2);
+            detach && removeElement(spaceNode4);
+            detach && removeElement(labelElement3);
+            detach && removeElement(spaceNode6);
+            detach && removeElement(preElement);
+            listenersAttached = !1;
+            executeAll(eventListeners)
         }
     }
 }
 
-function Lg(f) {
-    let i, n, l, s;
-    const d = [Ig, Cg],
-        u = [];
+function renderComponentByState(f) {
+    let currentIndex, componentInstance, emptyTextNode, isMounted;
+    const componentConstructors = [createImageExportComponent, createNoImagesMessage],
+        componentCache = [];
 
-    function a(m, _) {
-        return m[5].length > 0 ? 0 : 1
+    function determineComponentIndex(currentState, _) {
+        return currentState[5].length > 0 ? 0 : 1
     }
-    return i = a(f), n = u[i] = d[i](f), {
+    return currentIndex = determineComponentIndex(f), componentInstance = componentCache[currentIndex] = componentConstructors[currentIndex](f), {
         c() {
-            n.c(), l = yn()
+            componentInstance.c();
+            emptyTextNode = createEmptyTextNode()
         },
-        m(m, _) {
-            u[i].m(m, _), pt(m, l, _), s = !0
+        m(parentElement, anchor) {
+            componentCache[currentIndex].m(parentElement, anchor);
+            insertBefore(parentElement, emptyTextNode, anchor);
+            isMounted = !0
         },
-        p(m, [_]) {
-            let c = i;
-            i = a(m), i === c ? u[i].p(m, _) : (pr(), qt(u[c], 1, 1, () => {
-                u[c] = null
-            }), _r(), n = u[i], n ? n.p(m, _) : (n = u[i] = d[i](m), n.c()), Ht(n, 1), n.m(l.parentNode, l))
+        p(newState, [dirtyFlags]) {
+            let previousIndex = currentIndex;
+            currentIndex = determineComponentIndex(newState), currentIndex === previousIndex ? componentCache[currentIndex].p(newState, dirtyFlags) : (startPromiseContext(), handlePromise(componentCache[previousIndex], 1, 1, () => {
+                componentCache[previousIndex] = null
+            }), endPromiseContext(), componentInstance = componentCache[currentIndex], componentInstance ? componentInstance.p(newState, dirtyFlags) : (componentInstance = componentCache[currentIndex] = componentConstructors[currentIndex](newState), componentInstance.c()), invokeInitFunction(componentInstance, 1), componentInstance.m(emptyTextNode.parentNode, emptyTextNode))
         },
-        i(m) {
-            s || (Ht(n), s = !0)
+        i() {
+            isMounted || (invokeInitFunction(componentInstance), isMounted = !0)
         },
-        o(m) {
-            qt(n), s = !1
+        o() {
+            handlePromise(componentInstance);
+            isMounted = !1
         },
-        d(m) {
-            u[i].d(m), m && ht(l)
+        d(detach) {
+            componentCache[currentIndex].d(detach);
+            detach && removeElement(emptyTextNode)
         }
     }
 }
 
-function Dg(f, i, n) {
-    let l = Ct.Idle,
-        s = "",
-        d = 100,
-        u = 1,
-        a = !1,
-        m = [];
-    yl(async () => {
-        const p = await getAllMessages();
-        n(5, m = p.filter(x => x.content.type === "images"))
+function exportImagesComponent(f, i, setState) {
+    let exportStatus = ExportStatus.Idle,
+        errorMessage = "",
+        chunkSize = 100,
+        delayInSeconds = 1,
+        includeMetadata = !1,
+        imageMessages = [];
+    addOnMountHook(async () => {
+        const allMessages = await getAllMessages();
+        setState(5, imageMessages = allMessages.filter(x => x.content.type === "images"))
     });
-    async function _() {
-        n(0, l = Ct.Working);
+    async function startExport() {
+        setState(0, exportStatus = ExportStatus.Working);
         const {
-            data: p,
-            error: x
-        } = await hr();
-        if (x) {
-            n(1, s = JSON.stringify(x, null, 4)), n(0, l = Ct.Idle);
+            data: authData,
+            error: authError
+        } = await extractAuthData();
+        if (authError) {
+            setState(1, errorMessage = JSON.stringify(authError, null, 4)), setState(0, exportStatus = ExportStatus.Idle);
             return
         }
-        const y = LodashE1.chunk(m, d);
-        for (const A of y) {
-            const S = new LodashE2;
-            await Promise.all(A.map(async (T, L) => {
-                const B = T.content.text,
-                    G = {
-                        Customer: p.userName,
-                        Robot: p.botName
+        const messageChunks = LodashE1.chunk(imageMessages, chunkSize);
+        for (const chunk of messageChunks) {
+            const zip = new LodashE2;
+            await Promise.all(chunk.map(async (T, L) => {
+                const imageUrl = T.content.text,
+                    participant = {
+                        Customer: authData.userName,
+                        Robot: authData.botName
                     } [T.meta.nature],
-                    W = [L, T.meta.timestamp, G],
-                    V = T.meta.timestamp.replaceAll(":", "-").replaceAll(".", "-");
+                    logEntry = [L, T.meta.timestamp, participant],
+                    formattedTimestamp = T.meta.timestamp.replaceAll(":", "-").replaceAll(".", "-");
                 try {
-                    const st = await (await fetch("https://my.replika.ai/api/mobile/1.5/images/signed/actions/get_url", {
+                    const signedUrlResponse = await (await fetch("https://my.replika.ai/api/mobile/1.5/images/signed/actions/get_url", {
                         method: "POST",
-                        headers: zr(p),
+                        headers: createRequestHeaders(authData),
                         body: JSON.stringify({
-                            image_url: B
+                            image_url: imageUrl
                         })
                     })).json();
-                    W.push(st.image_url);
-                    const D = await (await fetch(`https://corsproxy.io/?${st.image_url}`)).blob();
-                    S.file(`${V}_${G}_${T.id}.jpg`.toLowerCase(), D)
-                } catch (Z) {
-                    console.warn(Z, T), W.push(Z)
+                    logEntry.push(signedUrlResponse.image_url);
+                    const imageBlob = await (await fetch(`https://corsproxy.io/?${signedUrlResponse.image_url}`)).blob();
+                    zip.file(`${formattedTimestamp}_${participant}_${T.id}.jpg`.toLowerCase(), imageBlob)
+                } catch (error) {
+                    console.warn(error, T), logEntry.push(error)
                 }
-                n(1, s = `${W.join(" - ")}
-${s}`)
+                setState(1, errorMessage = `${logEntry.join(" - ")}
+${errorMessage}`)
             }));
-            const C = await S.generateAsync({
+            const zipBlob = await zip.generateAsync({
                 type: "blob"
             });
-            LodashE3.saveAs(C, `replika-export-image-${Oi()}.zip`), await new Promise(T => setTimeout(T, 1e3 * u))
+            LodashE3.saveAs(zipBlob, `replika-export-image-${generateUUID()}.zip`), await new Promise(T => setTimeout(T, 1e3 * delayInSeconds))
         }
-        n(0, l = Ct.Idle)
+        setState(0, exportStatus = ExportStatus.Idle)
     }
 
-    function c() {
-        a = this.checked, n(4, a)
+    function toggleMetadata() {
+        includeMetadata = this.checked, setState(4, includeMetadata)
     }
 
-    function g() {
-        d = lr(this.value), n(2, d)
+    function updateChunkSize() {
+        chunkSize = parseInteger(this.value), setState(2, chunkSize)
     }
 
-    function h() {
-        u = lr(this.value), n(3, u)
+    function updateDelay() {
+        delayInSeconds = parseInteger(this.value), setState(3, delayInSeconds)
     }
-    return [l, s, d, u, a, m, _, c, g, h]
+    return [exportStatus, errorMessage, chunkSize, delayInSeconds, includeMetadata, imageMessages, startExport, toggleMetadata, updateChunkSize, updateDelay]
 }
-class zg extends rn {
-    constructor(i) {
-        super(), nn(this, i, Dg, Lg, en, {})
+class ImageExportComponent extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, exportImagesComponent, renderComponentByState, isEqual, {})
     }
-}
-
-function hl(f, i, n) {
-    const l = f.slice();
-    return l[7] = i[n].name, l[8] = i[n].component, l
 }
 
-function dl(f, i, n) {
-    const l = f.slice();
-    return l[7] = i[n].name, l
+function updateListWithComponentName(state, componentList, index) {
+    const updatedState = state.slice();
+    return updatedState[7] = componentList[index].name, updatedState[8] = componentList[index].component, updatedState
 }
 
-function Bg(f) {
-    let i, n;
-    return i = new kl({
-        props: {
-            error: f[13]
-        }
-    }), {
+function updateListWithComponentNameOnly(state, componentList, index) {
+    const updatedState = state.slice();
+    return updatedState[7] = componentList[index].name, updatedState
+}
+
+function createFragmentForStateUpdate(state) {
+    let selectedIndex, fragmentList, componentFragment, isMounted;
+    const componentHandlers = [renderComponentA, renderComponentB],
+        componentInstances = [];
+
+    function selectComponentToRender(stateValue, componentList) {
+        return stateValue[6] === !0 ? 0 : 1
+    }
+    return selectedIndex = selectComponentToRender(state), fragmentList = componentInstances[selectedIndex] = componentHandlers[selectedIndex](state), {
         c() {
-            Ee(i.$$.fragment)
+            fragmentList.c();
+            componentFragment = createEmptyTextNode()
         },
-        m(l, s) {
-            ye(i, l, s), n = !0
+        m(parentElement, anchor) {
+            componentInstances[selectedIndex].m(parentElement, anchor);
+            insertBefore(parentElement, componentFragment, anchor);
+            isMounted = !0
         },
-        p: ne,
-        i(l) {
-            n || (Ht(i.$$.fragment, l), n = !0)
+        p(newState, dirtyFlags) {
+            fragmentList.p(newState, dirtyFlags)
         },
-        o(l) {
-            qt(i.$$.fragment, l), n = !1
+        i() {
+            isMounted || (invokeInitFunction(fragmentList), isMounted = !0)
         },
-        d(l) {
-            be(i, l)
+        o() {
+            handlePromise(fragmentList);
+            isMounted = !1
+        },
+        d(detach) {
+            componentInstances[selectedIndex].d(detach);
+            detach && removeElement(componentFragment)
         }
     }
 }
 
-function Fg(f) {
-    let i, n, l, s;
-    const d = [Ug, Ng],
-        u = [];
-
-    function a(m, _) {
-        return m[6] === !0 ? 0 : 1
-    }
-    return i = a(f), n = u[i] = d[i](f), {
+function renderComponentB(f) {
+    let componentInstance, isMounted;
+    return componentInstance = new MainLicenseClass({}), {
         c() {
-            n.c(), l = yn()
+            createFragment(componentInstance.$$.fragment)
         },
-        m(m, _) {
-            u[i].m(m, _), pt(m, l, _), s = !0
+        m(parentElement, anchor) {
+            mountComponent(componentInstance, parentElement, anchor);
+            isMounted = !0
         },
-        p(m, _) {
-            n.p(m, _)
+        p: noOperation,
+        i(isIntro) {
+            isMounted || (invokeInitFunction(componentInstance.$$.fragment, isIntro), isMounted = !0)
         },
-        i(m) {
-            s || (Ht(n), s = !0)
+        o(isOutro) {
+            handlePromise(componentInstance.$$.fragment, isOutro);
+            isMounted = !1
         },
-        o(m) {
-            qt(n), s = !1
-        },
-        d(m) {
-            u[i].d(m), m && ht(l)
+        d(detach) {
+            destroyComponent(componentInstance, detach)
         }
     }
 }
 
-function Ng(f) {
-    let i, n;
-    return i = new kl({}), {
-        c() {
-            Ee(i.$$.fragment)
-        },
-        m(l, s) {
-            ye(i, l, s), n = !0
-        },
-        p: ne,
-        i(l) {
-            n || (Ht(i.$$.fragment, l), n = !0)
-        },
-        o(l) {
-            qt(i.$$.fragment, l), n = !1
-        },
-        d(l) {
-            be(i, l)
-        }
-    }
-}
-
-function Ug(f) {
-    let i, n, l, s, d, u, a = f[2],
-        m = [];
-    for (let h = 0; h < a.length; h += 1) m[h] = pl(dl(f, a, h));
-    let _ = f[2],
-        c = [];
-    for (let h = 0; h < _.length; h += 1) c[h] = gl(hl(f, _, h));
-    const g = h => qt(c[h], 1, 1, () => {
-        c[h] = null
+function renderComponentA(state) {
+    let navElement, txtNode, aElement, spaceNode, divElement, updateList, newItems = state[2],
+        renderedItems = [];
+    for (let index = 0; index < newItems.length; index += 1) renderedItems[index] = createDivComponentWithEvents(updateListWithComponentNameOnly(state, newItems, index));
+    let components = state[2],
+        renderedComponents = [];
+    for (let index = 0; index < components.length; index += 1) renderedComponents[index] = createConditionalComponent(updateListWithComponentName(state, components, index));
+    const g = h => handlePromise(renderedComponents[h], 1, 1, () => {
+        renderedComponents[h] = null
     });
     return {
         c() {
-            i = ot("nav");
-            for (let h = 0; h < m.length; h += 1) m[h].c();
-            n = Et(), l = ot("a"), l.textContent = "FAQ", s = Et(), d = ot("div");
-            for (let h = 0; h < c.length; h += 1) c[h].c();
-            dt(l, "href", "https://index.garden/replika-export/#faq"), dt(l, "target", "__blank"), dt(i, "class", "flex space-x-4 absolute top-10 left-10 font-mono capitalize")
+            navElement = createElement("nav");
+            for (let index2 = 0; index2 < renderedItems.length; index2 += 1) renderedItems[index2].c();
+            txtNode = createSpaceTextNode();
+            aElement = createElement("a");
+            aElement.textContent = "FAQ";
+            spaceNode = createSpaceTextNode();
+            divElement = createElement("div");
+            for (let index2 = 0; index2 < renderedComponents.length; index2 += 1) renderedComponents[index2].c();
+            setAttribute(aElement, "href", "https://index.garden/replika-export/#faq");
+            setAttribute(aElement, "target", "__blank");
+            setAttribute(navElement, "class", "flex space-x-4 absolute top-10 left-10 font-mono capitalize")
         },
-        m(h, p) {
-            pt(h, i, p);
-            for (let x = 0; x < m.length; x += 1) m[x].m(i, null);
-            q(i, n), q(i, l), pt(h, s, p), pt(h, d, p);
-            for (let x = 0; x < c.length; x += 1) c[x].m(d, null);
-            u = !0
+        m(parentElement, anchor) {
+            insertBefore(parentElement, navElement, anchor);
+            for (let index3 = 0; index3 < renderedItems.length; index3 += 1) renderedItems[index3].m(navElement, null);
+            appendChild(navElement, txtNode);
+            appendChild(navElement, aElement);
+            insertBefore(parentElement, spaceNode, anchor);
+            insertBefore(parentElement, divElement, anchor);
+            for (let index3 = 0; index3 < renderedComponents.length; index3 += 1) renderedComponents[index3].m(divElement, null);
+            updateList = !0
         },
-        p(h, p) {
-            if (p & 13) {
-                a = h[2];
-                let x;
-                for (x = 0; x < a.length; x += 1) {
-                    const y = dl(h, a, x);
-                    m[x] ? m[x].p(y, p) : (m[x] = pl(y), m[x].c(), m[x].m(i, n))
+        p(newState, dirtyFlags) {
+            if (dirtyFlags & 13) {
+                newItems = newState[2];
+                let index7;
+                for (index7 = 0; index7 < newItems.length; index7 += 1) {
+                    const y = updateListWithComponentNameOnly(newState, newItems, index7);
+                    renderedItems[index7] ? renderedItems[index7].p(y, dirtyFlags) : (renderedItems[index7] = createDivComponentWithEvents(y), renderedItems[index7].c(), renderedItems[index7].m(navElement, txtNode))
                 }
-                for (; x < m.length; x += 1) m[x].d(1);
-                m.length = a.length
+                for (; index7 < renderedItems.length; index7 += 1) renderedItems[index7].d(1);
+                renderedItems.length = newItems.length
             }
-            if (p & 5) {
-                _ = h[2];
-                let x;
-                for (x = 0; x < _.length; x += 1) {
-                    const y = hl(h, _, x);
-                    c[x] ? (c[x].p(y, p), Ht(c[x], 1)) : (c[x] = gl(y), c[x].c(), Ht(c[x], 1), c[x].m(d, null))
+            if (dirtyFlags & 5) {
+                components = newState[2];
+                let index6;
+                for (index6 = 0; index6 < components.length; index6 += 1) {
+                    const updatedItem = updateListWithComponentName(newState, components, index6);
+                    renderedComponents[index6] ? (renderedComponents[index6].p(updatedItem, dirtyFlags), invokeInitFunction(renderedComponents[index6], 1)) : (renderedComponents[index6] = createConditionalComponent(updatedItem), renderedComponents[index6].c(), invokeInitFunction(renderedComponents[index6], 1), renderedComponents[index6].m(divElement, null))
                 }
-                for (pr(), x = _.length; x < c.length; x += 1) g(x);
-                _r()
+                for (startPromiseContext(), index6 = components.length; index6 < renderedComponents.length; index6 += 1) g(index6);
+                endPromiseContext()
             }
         },
-        i(h) {
-            if (!u) {
-                for (let p = 0; p < _.length; p += 1) Ht(c[p]);
-                u = !0
+        i() {
+            if (!updateList) {
+                for (let index4 = 0; index4 < components.length; index4 += 1) invokeInitFunction(renderedComponents[index4]);
+                updateList = !0
             }
         },
-        o(h) {
-            c = c.filter(Boolean);
-            for (let p = 0; p < c.length; p += 1) qt(c[p]);
-            u = !1
+        o() {
+            renderedComponents = renderedComponents.filter(Boolean);
+            for (let index5 = 0; index5 < renderedComponents.length; index5 += 1) handlePromise(renderedComponents[index5]);
+            updateList = !1
         },
-        d(h) {
-            h && ht(i), Dn(m, h), h && ht(s), h && ht(d), Dn(c, h)
+        d(detach) {
+            detach && removeElement(navElement);
+            callDestroyMethods(renderedItems, detach);
+            detach && removeElement(spaceNode);
+            detach && removeElement(divElement);
+            callDestroyMethods(renderedComponents, detach)
         }
     }
 }
 
-function pl(f) {
-    let i, n = f[7] + "",
-        l, s, d, u;
+function createDivComponentWithEvents(state) {
+    let divElement, componentText = state[7] + "",
+        txtNode, eventHandlerSet, eventListenersRegistered, eventHandlers;
 
-    function a() {
-        return f[4](f[7])
+    function handleClick() {
+        return state[4](state[7])
     }
 
-    function m() {
-        return f[5](f[7])
+    function handleKeyPress() {
+        return state[5](state[7])
     }
     return {
         c() {
-            i = ot("div"), l = It(n), dt(i, "class", s = f[0] === f[7] ? "font-bold cursor-not-allowed" : "cursor-pointer")
+            divElement = createElement("div");
+            txtNode = createTextNode(componentText);
+            setAttribute(divElement, "class", eventHandlerSet = state[0] === state[7] ? "font-bold cursor-not-allowed" : "cursor-pointer")
         },
-        m(_, c) {
-            pt(_, i, c), q(i, l), d || (u = [le(i, "click", a), le(i, "keypress", m)], d = !0)
+        m(parentELement, anchor) {
+            insertBefore(parentELement, divElement, anchor);
+            appendChild(divElement, txtNode);
+            eventListenersRegistered || (eventHandlers = [addEventListenerWithCleanup(divElement, "click", handleClick), addEventListenerWithCleanup(divElement, "keypress", handleKeyPress)], eventListenersRegistered = !0)
         },
-        p(_, c) {
-            f = _, c & 1 && s !== (s = f[0] === f[7] ? "font-bold cursor-not-allowed" : "cursor-pointer") && dt(i, "class", s)
+        p(newState, dirtyFlags) {
+            state = newState, dirtyFlags & 1 && eventHandlerSet !== (eventHandlerSet = state[0] === state[7] ? "font-bold cursor-not-allowed" : "cursor-pointer") && setAttribute(divElement, "class", eventHandlerSet)
         },
-        d(_) {
-            _ && ht(i), d = !1, tn(u)
+        d(detach) {
+            detach && removeElement(divElement);
+            eventListenersRegistered = !1;
+            executeAll(eventHandlers)
         }
     }
 }
 
-function _l(f) {
-    let i, n, l;
-    var s = f[8];
+function createDynamicComponent(state) {
+    let componentInstance, txtNode, isComponentMounted;
+    var componentDefinition = state[8];
 
     function d(u) {
         return {}
     }
-    return s && (i = Wu(s, d())), {
+    return componentDefinition && (componentInstance = createInstance(componentDefinition, d())), {
         c() {
-            i && Ee(i.$$.fragment), n = yn()
+            componentInstance && createFragment(componentInstance.$$.fragment);
+            txtNode = createEmptyTextNode()
         },
-        m(u, a) {
-            i && ye(i, u, a), pt(u, n, a), l = !0
+        m(parentElement, anchor) {
+            componentInstance && mountComponent(componentInstance, parentElement, anchor);
+            insertBefore(parentElement, txtNode, anchor);
+            isComponentMounted = !0
         },
-        p(u, a) {
-            if (s !== (s = u[8])) {
-                if (i) {
-                    pr();
-                    const m = i;
-                    qt(m.$$.fragment, 1, 0, () => {
-                        be(m, 1)
-                    }), _r()
+        p(newState, dirtyFlags) {
+            if (componentDefinition !== (componentDefinition = newState[8])) {
+                if (componentInstance) {
+                    startPromiseContext();
+                    const previousComponent = componentInstance;
+                    handlePromise(previousComponent.$$.fragment, 1, 0, () => {
+                        destroyComponent(previousComponent, 1)
+                    }), endPromiseContext()
                 }
-                s ? (i = Wu(s, d()), Ee(i.$$.fragment), Ht(i.$$.fragment, 1), ye(i, n.parentNode, n)) : i = null
+                componentDefinition ? (componentInstance = createInstance(componentDefinition, d()), createFragment(componentInstance.$$.fragment), invokeInitFunction(componentInstance.$$.fragment, 1), mountComponent(componentInstance, txtNode.parentNode, txtNode)) : componentInstance = null
             }
         },
-        i(u) {
-            l || (i && Ht(i.$$.fragment, u), l = !0)
+        i(isIntro) {
+            isComponentMounted || (componentInstance && invokeInitFunction(componentInstance.$$.fragment, isIntro), isComponentMounted = !0)
         },
-        o(u) {
-            i && qt(i.$$.fragment, u), l = !1
+        o(isOutro) {
+            componentInstance && handlePromise(componentInstance.$$.fragment, isOutro), isComponentMounted = !1
         },
-        d(u) {
-            u && ht(n), i && be(i, u)
+        d(detach) {
+            detach && removeElement(txtNode);
+            componentInstance && destroyComponent(componentInstance, detach)
         }
     }
 }
 
-function gl(f) {
-    let i, n, l = f[7] === f[0] && _l(f);
+function createConditionalComponent(state) {
+    let txtNode, isComponentMounted, conditionallyRenderedComponent = state[7] === state[0] && createDynamicComponent(state);
     return {
         c() {
-            l && l.c(), i = yn()
+            conditionallyRenderedComponent && conditionallyRenderedComponent.c();
+            txtNode = createEmptyTextNode()
         },
-        m(s, d) {
-            l && l.m(s, d), pt(s, i, d), n = !0
+        m(parentElement, anchor) {
+            conditionallyRenderedComponent && conditionallyRenderedComponent.m(parentElement, anchor);
+            insertBefore(parentElement, txtNode, anchor);
+            isComponentMounted = !0
         },
-        p(s, d) {
-            s[7] === s[0] ? l ? (l.p(s, d), d & 1 && Ht(l, 1)) : (l = _l(s), l.c(), Ht(l, 1), l.m(i.parentNode, i)) : l && (pr(), qt(l, 1, 1, () => {
-                l = null
-            }), _r())
+        p(newState, anchor) {
+            newState[7] === newState[0] ? conditionallyRenderedComponent ? (conditionallyRenderedComponent.p(newState, anchor), anchor & 1 && invokeInitFunction(conditionallyRenderedComponent, 1)) : (conditionallyRenderedComponent = createDynamicComponent(newState), conditionallyRenderedComponent.c(), invokeInitFunction(conditionallyRenderedComponent, 1), conditionallyRenderedComponent.m(txtNode.parentNode, txtNode)) : conditionallyRenderedComponent && (startPromiseContext(), handlePromise(conditionallyRenderedComponent, 1, 1, () => {
+                conditionallyRenderedComponent = null
+            }), endPromiseContext())
         },
-        i(s) {
-            n || (Ht(l), n = !0)
+        i() {
+            isComponentMounted || (invokeInitFunction(conditionallyRenderedComponent), isComponentMounted = !0)
         },
-        o(s) {
-            qt(l), n = !1
+        o() {
+            handlePromise(conditionallyRenderedComponent), isComponentMounted = !1
         },
-        d(s) {
-            l && l.d(s), s && ht(i)
+        d(detach) {
+            conditionallyRenderedComponent && conditionallyRenderedComponent.d(detach);
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function Pg(f) {
-    let i;
+function createLoadingMessage(f) {
+    let txtNode;
     return {
         c() {
-            i = It("Loading ✨")
+            txtNode = createTextNode("Loading ✨")
         },
-        m(n, l) {
-            pt(n, i, l)
+        m(parentElement, anchor) {
+            insertBefore(parentElement, txtNode, anchor)
         },
-        p: ne,
-        i: ne,
-        o: ne,
-        d(n) {
-            n && ht(i)
+        p: noOperation,
+        i: noOperation,
+        o: noOperation,
+        d(detach) {
+            detach && removeElement(txtNode)
         }
     }
 }
 
-function Wg(f) {
-    let i, n, l, s = {
-        ctx: f,
+function createMainComponent(state) {
+    let mainElement, divElement, isComponentMounted, asyncComponent = {
+        ctx: state,
         current: null,
         token: null,
         hasCatch: !0,
-        pending: Pg,
-        then: Fg,
-        catch: Bg,
+        pending: createLoadingMessage,
+        then: createFragmentForStateUpdate,
         value: 6,
         error: 13,
         blocks: [, , , ]
     };
-    return v1(f[1], s), {
+    return handleAsyncValue(state[1], asyncComponent), {
         c() {
-            i = ot("main"), n = ot("div"), s.block.c(), dt(n, "class", "w-lg text-sm"), dt(i, "class", "text-white min-h-screen flex justify-center pt-[8rem] svelte-1iiiq66")
+            mainElement = createElement("main");
+            divElement = createElement("div");
+            asyncComponent.block.c();
+            setAttribute(divElement, "class", "w-lg text-sm");
+            setAttribute(mainElement, "class", "text-white min-h-screen flex justify-center pt-[8rem] svelte-1iiiq66")
         },
-        m(d, u) {
-            pt(d, i, u), q(i, n), s.block.m(n, s.anchor = null), s.mount = () => n, s.anchor = null, l = !0
+        m(parentElement, anchor) {
+            insertBefore(parentElement, mainElement, anchor);
+            appendChild(mainElement, divElement);
+            asyncComponent.block.m(divElement, asyncComponent.anchor = null);
+            asyncComponent.mount = () => divElement;
+            asyncComponent.anchor = null;
+            isComponentMounted = !0
         },
-        p(d, [u]) {
-            f = d, w1(s, f, u)
+        p(newState, [dirtyFlags]) {
+            state = newState, updateComponent(asyncComponent, state, dirtyFlags)
         },
-        i(d) {
-            l || (Ht(s.block), l = !0)
+        i() {
+            isComponentMounted || (invokeInitFunction(asyncComponent.block), isComponentMounted = !0)
         },
-        o(d) {
-            for (let u = 0; u < 3; u += 1) {
-                const a = s.blocks[u];
-                qt(a)
+        o() {
+            for (let index = 0; index < 3; index += 1) {
+                const a = asyncComponent.blocks[index];
+                handlePromise(a)
             }
-            l = !1
+            isComponentMounted = !1
         },
-        d(d) {
-            d && ht(i), s.block.d(), s.token = null, s = null
+        d(detach) {
+            detach && removeElement(mainElement);
+            asyncComponent.block.d();
+            asyncComponent.token = null;
+            asyncComponent = null
         }
     }
 }
 
-function Mg(f, i, n) {
-    const l = checkPayment(),
-        s = [{
+function initializeExportComponents(f, i, n) {
+    const exportOptions = [{
             name: "chat",
             component: eg
         }, {
             name: "voice",
-            component: hg
+            component: VoiceMessageExportComponent
         }, {
             name: "image",
-            component: zg
+            component: ImageExportComponent
         }, {
             name: "diary",
-            component: xg
+            component: DiaryComponent
         }, {
             name: "memory",
-            component: Eg
+            component: MemoryExportComponent
         }];
-    let d = "chat";
+    let selectedExportType = "chat";
 
-    function u(_) {
-        d !== _ && n(0, d = _)
+    function updateExportType(newExportType) {
+        selectedExportType !== newExportType && n(0, selectedExportType = newExportType)
     }
-    return [d, l, s, u, _ => u(_), _ => u(_)]
+    return [selectedExportType, true, exportOptions, updateExportType, _ => updateExportType(_), _ => updateExportType(_)]
 }
-class $g extends rn {
-    constructor(i) {
-        super(), nn(this, i, Mg, Wg, en, {})
+class ExportComponentManager extends ComponentClass {
+    constructor(props) {
+        super(), initializeComponent(this, props, initializeExportComponents, createMainComponent, isEqual, {})
     }
 }
-new $g({
+new ExportComponentManager({
     target: document.getElementById("app")
 });

@@ -1,24 +1,36 @@
 {
-   "action": {
-   },
-   "background": {
-      "service_worker": "service-worker-loader.js",
-      "type": "module"
-   },
-   "description": "Export your Replika chat messages, diary and memory entries.",
-   "differential_fingerprint": "1.5f5d530fb026382499bc3cb05c8ab85edc64661c67cb62b1f18451dc71b297f2",
-   "host_permissions": [ "https://my.replika.com/*", "https://my.replika.ai/*" ],
-   "icons": {
-      "128": "icons/128.png",
-      "16": "icons/16.png",
-      "32": "icons/32.png",
-      "48": "icons/48.png"
-   },
-   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmoz52HVxvHd5UyoBm/zetYHsphW5umGOhmF63G8vUBdnKbX19NQg68HEGiJz2JT0yfLiF6wSUhy2y2dHgbm46y/OQiwD3ZGd7vOtZ3W8SixCr1dSBzCtxiR1EIcEfp3FNAw/kYEbqXU5ZSIDkXSEPx/9XYEeNd3YoVkj2i13ZUXqyJcVgMZayq2LYTG1aH7M0+iYEOD0GzRA86KWwBR/fer89vSkSAUwLIUYQBOnYIOLOlmMMj4X8VJ4HBKtGjCGrNha0KMNVFgvoPgLtd3Z9gm6fvyUBvBwQzODHfV9zD7TSbgek2mxN2cv38nfHb/OaySih7GpmHkRv4Q+QINNpQIDAQAB",
    "manifest_version": 3,
    "name": "Replika Export: Chat, Diary, Memory",
-   "options_page": "index.html",
-   "permissions": [ "contextMenus", "storage", "scripting" ],
-   "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "12024.06.23"
+   "version": "1.0.0",
+   "description": "Export your Replika chat messages, diary, and memory entries.",
+   "icons": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+   },
+   "action": {
+      "default_icon": {
+         "16": "icons/16.png",
+         "32": "icons/32.png",
+         "48": "icons/48.png",
+         "128": "icons/128.png"
+      }
+   },
+   "background": {
+      "scripts": ["./assets/background-script.js"]
+   },
+   "host_permissions": [
+      "https://my.replika.com/*",
+      "https://my.replika.ai/*"
+   ],
+   "permissions": [
+      "contextMenus",
+      "scripting",
+      "storage",
+      "activeTab",
+      "webNavigation",
+      "tabs"
+    ],
+   "options_page": "index.html"
 }

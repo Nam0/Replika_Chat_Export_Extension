@@ -1,26 +1,23 @@
-//assets/background-script.js
-import { database as runtime } from "./replikaExport.js";
+// assets/background-script.js
+const runtime = typeof browser === "undefined" ? chrome : browser;
+const contextMenuId = "replika-export";
 
-// Remove existing context menus and create a new one for exporting Replika chat
-chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
+runtime.contextMenus.removeAll(() => {
+    runtime.contextMenus.create({
+        contexts: ["action"],
         documentUrlPatterns: ["https://my.replika.com/*", "https://my.replika.ai/*"],
-        id: "replika-export",
+        id: contextMenuId,
         title: "Export Replika Chat"
     });
 });
 
-// Add a click listener for the context menu
-chrome.contextMenus.onClicked.addListener(async event => {
-    if (event.menuItemId !== "replika-export") return;
+runtime.contextMenus.onClicked.addListener(async event => {
+    if (event.menuItemId !== contextMenuId) return;
 
-    // Open the chat export page when the context menu item is clicked
-    const exportPageUrl = chrome.runtime.getURL("index.html?ref=menu");
-    await chrome.tabs.create({ url: exportPageUrl });
+    const exportPageUrl = runtime.runtime.getURL("index.html?ref=menu");
+    await runtime.tabs.create({ url: exportPageUrl });
 });
 
-// Add a listener for the action button click
-chrome.action.onClicked.addListener(() => {
-    // Open the options page when the action button is clicked
-    chrome.runtime.openOptionsPage();
+runtime.action.onClicked.addListener(() => {
+    runtime.runtime.openOptionsPage();
 });
