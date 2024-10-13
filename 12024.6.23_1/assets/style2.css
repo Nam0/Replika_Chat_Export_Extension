@@ -1,0 +1,16 @@
+#app {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center the buttons horizontally */
+    margin-top: 20px; /* Add some space from the top */
+}
+
+button {
+    margin: 10px 0; /* Space between buttons */
+    padding: 10px 20px; /* Button padding */
+    font-size: 16px; /* Increase font size */
+}
+
+span {
+    font-size: 16px; /* Ensure entry count text is the same size as button text */
+}

@@ -9,15 +9,49 @@ let database;
 
 const dbRequest = indexedDB.open(dbName, 1);
 
-dbRequest.addEventListener("success", event => {
+dbRequest.onsuccess = event => {
     database = event.target.result;
-});
+    console.log("Database opened successfully.");
+};
 
 dbRequest.onupgradeneeded = event => {
-    event.target.result.createObjectStore("messages", {
-        keyPath: "id"
-    });
+    const db = event.target.result;
+
+    // Create messages object store
+    if (!db.objectStoreNames.contains("messages")) {
+        db.createObjectStore("messages", { keyPath: "id" });
+        console.log("Messages object store created.");
+    }
+
+    // Create memories object store
+    if (!db.objectStoreNames.contains("memories")) {
+        db.createObjectStore("memories", { keyPath: "id" });
+        console.log("Memories object store created.");
+    }
+
+    // Create diary object store
+    if (!db.objectStoreNames.contains("diary")) {
+        db.createObjectStore("diary", { keyPath: "id" });
+        console.log("Diary object store created.");
+    }
+
+    // Create images object store
+    if (!db.objectStoreNames.contains("images")) {
+        db.createObjectStore("images", { keyPath: "id" });
+        console.log("Images object store created.");
+    }
+
+    // Create voice Message object store
+    if (!db.objectStoreNames.contains("voiceMSG")) {
+        db.createObjectStore("voiceMSG", { keyPath: "id" });
+        console.log("Voice Message object store created.");
+   }
 };
+
+dbRequest.onerror = event => {
+    console.error("Database error:", event.target.error);
+};
+
 
 async function getLastMessageId() {
     if (!database) return;
