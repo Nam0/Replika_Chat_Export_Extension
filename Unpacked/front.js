@@ -1,4 +1,4 @@
-//assets/front.js
+//front.js
 import {
     exportChat,
     exportMemories,
@@ -209,7 +209,7 @@ function showSettingsPage() {
         fieldContainer.style.display = "flex";
         fieldContainer.style.alignItems = "center";
         fieldContainer.style.marginBottom = "10px";
-        fieldContainer.style.position = "relative"; // For placing the eyeball icon inside
+        fieldContainer.style.position = "relative"; //For placing the eyeball icon inside
 
         const fieldLabel = document.createElement("label");
         fieldLabel.textContent = label;
@@ -217,22 +217,22 @@ function showSettingsPage() {
         fieldLabel.style.marginRight = "10px";
 
         const inputField = document.createElement("input");
-        inputField.type = "password"; // Start with hidden text
+        inputField.type = "password"; //Start with hidden text
         inputField.id = id;
         inputField.value = value;
         inputField.style.width = "300px";
-        inputField.style.paddingRight = "30px"; // Space for the toggle button
+        inputField.style.paddingRight = "30px"; //Space for the toggle button
 
         const toggleButton = document.createElement("span");
-        toggleButton.textContent = "👁️"; // Eyeball emoji, or use an icon if preferred
+        toggleButton.textContent = "👁️"; //Eyeball emoji, or use an icon if preferred
         toggleButton.style.position = "absolute";
         toggleButton.style.right = "10px";
         toggleButton.style.cursor = "pointer";
-        toggleButton.style.userSelect = "none"; // Prevent selection
+        toggleButton.style.userSelect = "none"; //Prevent selection
         toggleButton.onclick = () => {
             if (inputField.type === "password") {
                 inputField.type = "text";
-                toggleButton.textContent = "🙈"; // Change to closed eye emoji or any other indicator
+                toggleButton.textContent = "🙈"; //Change to closed eye emoji or any other indicator
             } else {
                 inputField.type = "password";
                 toggleButton.textContent = "👁️";
@@ -258,7 +258,7 @@ function showSettingsPage() {
     createInputFieldWithToggle("Auth Token", "auth-authToken", authObj.authToken || "");
     createInputFieldWithToggle("Chat ID", "ws-chatId", chatObj.chatId || "");
 
-    // Non-hidden fields
+    //Non-hidden fields
     const createInputField = (label, id, value) => {
         const fieldContainer = document.createElement("div");
         fieldContainer.style.display = "flex";
@@ -312,7 +312,7 @@ function showSettingsPage() {
     };
     document.getElementById("app").appendChild(saveButton);
 
-    // Clear saved data button
+    //Clear saved data button
     const clearButton = document.createElement("button");
     clearButton.textContent = "Clear Saved Data";
     clearButton.onclick = () => {

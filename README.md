@@ -13,20 +13,32 @@ This is a rewrite of the original [Replika Chat Exporter](https://github.com/dev
 
 ## Work In Progress
 
-- **Voice Exports**: Voice exports current fail due to CORS - strict-origin-when-cross-origin
-    - idfk how to fix this but ye it's a thing
-- **Manifest Stuff**: idk Im too lazy to setup a google dev acct to post it on there I'll probably do that later
-- **Comments**: I've looked at it so long it makes sense but at the same time I'm still lost in some areas gotta add comments later
-- **Fix Firefox Exports**: Sometimes Firefox exports fail due to the tab not being active when the browser attempts to inject scripts into it gotta fix that
-- **Strip it**: Idk about you gamers but I think the lodash bit is kinda hot garbage, can store everything in blob storage and pull it easier that way, im not 100% sure but I belive we can use that to get voice Exports as well. Cutting out svelte will cut down on the file size of index.js slight preformance boost there
+- **Voice Exports**: Voice exports currently fail due to CORS - strict-origin-when-cross-origin
+    - I gotta play around with corsproxy more and I can prolly get that to work and save it somehow but lazy rn
+- **Comments**: I've looked at it so long it makes sense, but at the same time I'm still lost in some areas—gotta add comments later. like for the md5 hashing bit for timestamps i'm a bozo there
+
+## Firefox Installation
+Firefox is lovely and lets me upload extensions for free you should be able to view it here sometime soon!
+[Addon Page](https://addons.mozilla.org/en-US/firefox/addon/replika-chat-export/)
+
+## Chrome Installation
+
+Currently, the extension is not available on the Chrome Web Store due to a $5 upload fee. However, you can easily use it in Chrome by following these steps:
+
+1. Download the **Chrome_Replika_Exporter.zip** file.
+2. Unzip it to a location of your choice.
+3. Open Chrome and go to `chrome://extensions/`.
+4. Enable **Developer mode** in the top right corner.
+5. Click **Load unpacked** and navigate to the unzipped folder.
+6. Select the folder to add the extension.
 
 ## Development
 
-The code is currently undergoing refactoring to enhance performance and readability. Contributions to improve the extension or its codebase are welcome! Feel free to open an issue or submit a pull request.
+Contributions to improve the extension or its codebase are welcome! Feel free to open an issue or submit a pull request.
 
 ## Contact
 
-For questions or support, please open an issue in the repository or figure it out with this [wonderful tool](https://duckduckgo.com)
+For questions or support, please open an issue in the repository or figure it out with this [wonderful tool](https://duckduckgo.com).
 
 ## Stuff
 
@@ -34,4 +46,4 @@ I don’t care if you mess it up, but please make an issue request and I might h
 
 I take no responsibility for any issues you run into while using this; all legal rights are where they’re owed. Don’t pay a thief for free stuff.
 
-My son Jimmy wrote this readme file if it's bad blame his ass idk or care to format markdown files.
+My son Jimmy(my Shitty AI) wrote this README file; if it's bad, blame his ass idk or care to format markdown files.
