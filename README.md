@@ -16,6 +16,7 @@ This is a rewrite of the original [Replika Chat Exporter](https://github.com/dev
 - **Voice Exports**: Voice exports currently fail due to CORS - strict-origin-when-cross-origin
     - I gotta play around with corsproxy more and I can prolly get that to work and save it somehow but lazy rn
 - **Comments**: I've looked at it so long it makes sense, but at the same time I'm still lost in some areas—gotta add comments later. like for the md5 hashing bit for timestamps i'm a bozo there
+- **Takin a break**: I spent like 14 hours working on this, mostly just de-obfuscating the source code from devidw idek why I did all of it incluing the svelete stuff just to not use it but it was fun never again prolly
 
 ## Firefox Installation
 Firefox is lovely and lets me upload extensions for free you should be able to view it here sometime soon!
